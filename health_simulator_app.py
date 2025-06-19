@@ -78,6 +78,9 @@ with st.expander("⬆️ Upload Previous Simulation", expanded=False):
             partner_age = st.number_input("Partner Age", 18, 85, 30)
             partner_health_status = st.selectbox("Partner Health Status", ["healthy", "chronic", "high_risk"])
 
+        profile = st.session_state.get("profile", {})
+        dependents = profile.get("dependents", 0)
+
         insurance_type = st.radio("Insurance Type", ["Employer-based", "Marketplace / Self-insured", "None"])
 
         from insurance_module import get_insurance_costs_over_time
@@ -391,7 +394,7 @@ with st.expander("⬆️ Upload Previous Simulation", expanded=False):
                 # Only show childcare/school costs if user selected family and has one or more dependents
                 profile = st.session_state.get("profile", {})
                 # Show childcare/school costs input if family_status indicates children
-                if profile.get("family_status") in ["single_with_kids", "married_with_kids"]:
+                if dependents > 0:
                     monthly_childcare_school = st.number_input(
                         "Monthly Childcare / School Costs",
                         min_value=0,

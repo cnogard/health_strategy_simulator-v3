@@ -21,7 +21,7 @@ st.image("logo_capitalcare360.png", width=200)
 with st.sidebar:
     st.header("🔐 Beta Access")
     code = st.text_input("Enter beta access code:", type="password")
-    if code != "HSS_Beta_2025v1!":
+    if code != "HSS_Beta_2025v3!":
         st.stop()
 
 # App Title (just after access control)
@@ -383,11 +383,71 @@ with st.expander("⬆️ Upload Previous Simulation", expanded=False):
                 if family_status == "family":
                     net_income_annual_partner = net_income_monthly_partner * 12
                     income_growth_partner = st.slider("Partner's Income Growth Rate (%)", 0.0, 10.0, 3.0) / 100
-                # --- Collect actual monthly expense and debt inputs at the start of Step 2 ---
-                monthly_expenses = st.number_input("Monthly Household Expenses ($)", min_value=0, value=16500)
-                debt_monthly_payment = st.number_input("Monthly Debt Payments ($)", min_value=0, value=1500)
+
+                # --- 🧾 Monthly Fixed Commitments ---
                 st.markdown("### 🧾 Monthly Fixed Commitments")
-                st.markdown("### 💾 Savings Profile")
+                debt_monthly_payment = st.number_input("Monthly Debt Payments ($)", min_value=0, value=1500)
+                rent_or_mortgage = st.number_input("Monthly Rent or Mortgage ($)", min_value=0, value=2500)
+                childcare = st.number_input("Monthly Childcare/School ($)", min_value=0, value=1000)
+                other_fixed = st.number_input("Other Fixed Monthly Payments ($)", min_value=0, value=500)
+
+                # --- 🛒 Household Expenses ---
+                st.markdown("### 🛒 Household Expenses")
+                use_expense_toggle = st.radio(
+                    "Use average household spending or enter your own?",
+                    ["Use average", "Enter my own"],
+                    index=0,
+                    key="expense_toggle",
+                    help="National average: $16,500/mo for family of 4 (2023)"
+                )
+                if use_expense_toggle == "Use average":
+                    monthly_expenses = 16500
+                    st.info("Using national average: $16,500/mo for a family of 4 (2023). Adjust for your family size as needed.")
+                else:
+                    monthly_expenses = st.number_input("Monthly Household Expenses ($)", min_value=0, value=16500, key="custom_expenses")
+
+                # --- 💼 401(k) Contributions ---
+                st.markdown("### 💼 401(k) Contributions")
+                start_401k_user = st.number_input("Your Starting 401(k) Balance ($)", min_value=0, value=0)
+                if family_status == "family":
+                    start_401k_partner = st.number_input("Partner's Starting 401(k) Balance ($)", min_value=0, value=0)
+                # Store in profile
+                profile["start_401k_user"] = start_401k_user
+                if family_status == "family":
+                    profile["start_401k_partner"] = start_401k_partner
+                contrib_401k_employee = st.number_input(
+                    "Annual Employee 401(k) Contribution ($)",
+                    min_value=0,
+                    value=4000
+                )
+                contrib_401k_employer = st.number_input(
+                    "Annual Employer 401(k) Match ($)",
+                    min_value=0,
+                    value=2000
+                )
+                growth_401k = st.slider("401(k) Growth Rate (%)", 0.0, 10.0, 5.0) / 100
+                if family_status == "family":
+                    partner_401k_contrib = st.number_input(
+                        "Partner's Annual 401(k) Contribution ($)",
+                        min_value=0,
+                        value=4000,
+                        key="partner_401k_contrib"
+                    )
+                    partner_employer_401k_contrib = st.number_input(
+                        "Partner's Annual Employer 401(k) Match ($)",
+                        min_value=0,
+                        value=2000,
+                        key="partner_employer_401k_contrib"
+                    )
+                    partner_growth_401k = st.slider("Partner's 401(k) Growth Rate (%)", 0.0, 10.0, 5.0) / 100
+                    profile["partner_growth_401k"] = partner_growth_401k
+                else:
+                    # Optional: clear any previous partner values if not family
+                    st.session_state.pop("partner_401k_contrib", None)
+                    st.session_state.pop("partner_employer_401k_contrib", None)
+
+                # --- 💰 Savings Profile ---
+                st.markdown("### 💰 Savings Profile")
                 savings_start = st.number_input("Current Savings Balance ($)", 0, value=10000)
                 savings_growth = st.slider("Expected Savings Growth (%)", 0.0, 10.0, 3.0) / 100
                 annual_contrib = st.number_input("Annual Savings Contribution ($)", 0, value=3000)
@@ -396,58 +456,6 @@ with st.expander("⬆️ Upload Previous Simulation", expanded=False):
                     ["Home", "Education", "Vacations", "Retirement", "Health", "Rainy Day"],
                     default=["Retirement", "Health"]
                 )
-
-                st.markdown("### 🏦 401(k) Contributions")
-                start_401k_user = st.number_input("Your Starting 401(k) Balance ($)", min_value=0, value=0)
-
-                if family_status == "family":
-                    start_401k_partner = st.number_input("Partner's Starting 401(k) Balance ($)", min_value=0, value=0)
-
-                # Store in profile
-                profile["start_401k_user"] = start_401k_user
-                if family_status == "family":
-                    profile["start_401k_partner"] = start_401k_partner
-
-                contrib_401k_employee = st.number_input(
-                    "Annual Employee 401(k) Contribution ($)",
-                    min_value=0,
-                    value=4000
-                )
-
-                contrib_401k_employer = st.number_input(
-                    "Annual Employer 401(k) Match ($)",
-                    min_value=0,
-                    value=2000
-                )
-
-                growth_401k = st.slider("401(k) Growth Rate (%)", 0.0, 10.0, 5.0) / 100
-
-
-                if family_status == "family":
-
-                    partner_401k_contrib = st.number_input(
-                        "Partner's Annual 401(k) Contribution ($)",
-                        min_value=0,
-                        value=4000,
-                        key="partner_401k_contrib"
-                    )
-
-                    partner_employer_401k_contrib = st.number_input(
-                        "Partner's Annual Employer 401(k) Match ($)",
-                        min_value=0,
-                        value=2000,
-                        key="partner_employer_401k_contrib"
-                    )
-                    partner_growth_401k = st.slider("Partner's 401(k) Growth Rate (%)", 0.0, 10.0, 5.0) / 100
-
-                    profile["partner_growth_401k"] = partner_growth_401k
-                else:
-                    # Optional: clear any previous partner values if not family
-                    st.session_state.pop("partner_401k_contrib", None)
-                    st.session_state.pop("partner_employer_401k_contrib", None)
-
-
-
 
                 submit2 = st.form_submit_button("Run Step 2")
             if submit2:

@@ -388,8 +388,11 @@ with st.expander("⬆️ Upload Previous Simulation", expanded=False):
                 st.markdown("### 🧾 Monthly Fixed Commitments")
                 debt_monthly_payment = st.number_input("Monthly Debt Payments ($)", min_value=0, value=1500)
                 rent_or_mortgage = st.number_input("Monthly Rent or Mortgage ($)", min_value=0, value=2500)
-                # Only show childcare/school costs for relevant family statuses
-                if st.session_state.get("profile", {}).get("family_status") in ["single_with_kids", "married_with_kids"]:
+                # Only show childcare/school costs if user selected family and has one or more dependents
+                profile = st.session_state.get("profile", {})
+                family_status = profile.get("family_status", "")
+                dependents = profile.get("dependents", 0)
+                if family_status == "family" and dependents > 0:
                     monthly_childcare_school = st.number_input(
                         "Monthly Childcare / School Costs",
                         min_value=0,

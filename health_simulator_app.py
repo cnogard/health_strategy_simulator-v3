@@ -21,7 +21,7 @@ st.image("logo_capitalcare360.png", width=200)
 with st.sidebar:
     st.header("🔐 Beta Access")
     code = st.text_input("Enter beta access code:", type="password")
-    if code != "HSS_Beta_2025v1!":
+    if code != "HSS_Beta_2025v3!":
         st.stop()
 
 # App Title (just after access control)

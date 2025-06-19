@@ -393,7 +393,7 @@ with st.expander("⬆️ Upload Previous Simulation", expanded=False):
                 family_status = profile.get("family_status", "")
                 dependents = profile.get("dependents", 0)
                 if family_status == "family" and dependents > 0:
-                    monthly_childcare_school = st.number_input(
+                    st.number_input(
                         "Monthly Childcare / School Costs",
                         min_value=0,
                         value=0,

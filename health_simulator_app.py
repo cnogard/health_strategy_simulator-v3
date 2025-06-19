@@ -388,7 +388,14 @@ with st.expander("⬆️ Upload Previous Simulation", expanded=False):
                 st.markdown("### 🧾 Monthly Fixed Commitments")
                 debt_monthly_payment = st.number_input("Monthly Debt Payments ($)", min_value=0, value=1500)
                 rent_or_mortgage = st.number_input("Monthly Rent or Mortgage ($)", min_value=0, value=2500)
-                childcare = st.number_input("Monthly Childcare/School ($)", min_value=0, value=1000)
+                # Only show childcare/school costs for relevant family statuses
+                if family_status in ["single_with_kids", "married_with_kids"]:
+                    monthly_childcare_school = st.number_input(
+                        "Monthly Childcare / School Costs",
+                        min_value=0,
+                        value=0,
+                        help="Include regular childcare, tuition, or related expenses"
+                    )
                 other_fixed = st.number_input("Other Fixed Monthly Payments ($)", min_value=0, value=500)
 
                 # --- 🛒 Household Expenses ---
@@ -426,7 +433,13 @@ with st.expander("⬆️ Upload Previous Simulation", expanded=False):
                     value=2000
                 )
                 growth_401k = st.slider("401(k) Growth Rate (%)", 0.0, 10.0, 5.0) / 100
+                # --- Partner 401(k) Contributions: Sliders for monthly contributions ---
                 if family_status == "family":
+                    st.subheader("💼 Partner 401(k) Contributions")
+                    partner_401k_employee = st.slider("Partner Monthly Employee Contribution ($)", 0, 2000, 400, step=50)
+                    partner_401k_employer = st.slider("Partner Monthly Employer Contribution ($)", 0, 1000, 200, step=50)
+                    st.session_state["partner_401k_employee"] = partner_401k_employee
+                    st.session_state["partner_401k_employer"] = partner_401k_employer
                     partner_401k_contrib = st.number_input(
                         "Partner's Annual 401(k) Contribution ($)",
                         min_value=0,

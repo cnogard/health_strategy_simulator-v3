@@ -10,11 +10,24 @@ def get_risk_insight(age, health_status):
         return "You are currently low-risk. Maintain preventive care."
 
 def get_risk_trajectory(age, health_status):
-    # Returns a fake risk trajectory list between 0 and 1
+    # Returns a risk trajectory list based on age and health status
     years = list(range(age, 86))
-    if health_status == "high":
-        return [min(1.0, 0.6 + 0.02 * i) for i in range(len(years))]
+    trajectory = []
+
+    # Define starting risk and slope per status
+    if health_status == "high_risk":
+        base_risk = 0.5 if age < 18 else 0.6
+        slope = 0.025
     elif health_status == "chronic":
-        return [min(1.0, 0.4 + 0.015 * i) for i in range(len(years))]
-    else:
-        return [min(1.0, 0.2 + 0.01 * i) for i in range(len(years))]
+        trajectory = [0.75] * len(years)
+        return trajectory
+    else:  # healthy
+        base_risk = 0.1 if age < 18 else 0.2
+        slope = 0.01
+
+    # Generate trajectory with capping at 1.0
+    for i in range(len(years)):
+        risk = min(1.0, base_risk + slope * i)
+        trajectory.append(risk)
+
+    return trajectory

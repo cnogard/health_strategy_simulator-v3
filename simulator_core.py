@@ -2,29 +2,50 @@ import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
 
+
 def generate_costs(profile, care_preferences):
     ages = list(range(profile["age"], 86))
     base_cost = 2000
     cost_data = []
 
     for i, age in enumerate(ages):
-        total_cost = base_cost + (age - profile["age"]) * 100
-        # Conditional OOP and premium logic based on insurance type
         insurance_type = profile.get("insurance_type", "None")
-        if insurance_type == "Employer":
-            oop = total_cost * 0.15
-            premium = 1500 + (age - profile["age"]) * 40
-        elif insurance_type == "Marketplace":
-            oop = total_cost * 0.2
-            premium = 1800 + (age - profile["age"]) * 60
-        else:  # Uninsured
-            oop = total_cost * 0.5
-            premium = 0
         # Chronic illness adjustment
-        chronic_multiplier = 1.5  # Define this value based on actuarial logic
         if profile.get("health_status") == "chronic":
-            oop *= chronic_multiplier
-            premium *= chronic_multiplier
+            base_cost = 6500
+            chronic_inflation = st.session_state.get("expense_inflation", 0.05) + 0.02
+            years_since_start = age - profile["age"]
+            total_cost = base_cost * ((1 + chronic_inflation) ** years_since_start)
+
+            oop = total_cost * (
+                0.15 if insurance_type == "Employer"
+                else 0.2 if insurance_type == "Marketplace"
+                else 0.5
+            )
+
+            base_premium = 1500 if insurance_type == "Employer" else 1800 if insurance_type == "Marketplace" else 0
+            premium = base_premium * ((1 + chronic_inflation) ** years_since_start)
+
+            print(f"--- Chronic Cost Debug ---")
+            print(f"Age: {age}")
+            print(f"Years Since Start: {years_since_start}")
+            print(f"Base Cost: {base_cost}")
+            print(f"Chronic Inflation Rate: {chronic_inflation:.4f}")
+            print(f"Total Healthcare Cost: {total_cost:.2f}")
+            print(f"OOP Cost: {oop:.2f}")
+            print(f"Premium: {premium:.2f}")
+        else:
+            total_cost = 2000 + (age - profile["age"]) * 100
+            if insurance_type == "Employer":
+                oop = total_cost * 0.15
+                premium = 1500 + (age - profile["age"]) * 40
+            elif insurance_type == "Marketplace":
+                oop = total_cost * 0.2
+                premium = 1800 + (age - profile["age"]) * 60
+            else:  # Uninsured
+                oop = total_cost * 0.5
+                premium = 0
+
         entry = {
             "Age": age,
             "Healthcare Cost": total_cost,
@@ -96,6 +117,27 @@ def display_ai_recommendations(after_capital_strategy):
     Display the AI recommendation section after simulation outputs.
     Requires `after_capital_strategy` DataFrame and Streamlit session state variables.
     """
+    # --- Inserted chronic/high-risk recommendation logic ---
+    profile = st.session_state.get("profile", {})
+    health_status = profile.get("health_status", "healthy")
+    insurance_type = profile.get("insurance_type", "None")
+    free_cash = st.session_state.get("free_cash", 0)
+    savings = st.session_state.get("current_savings", 0)
+    underinsured = insurance_type in ["None", "Marketplace / Self-insured"]
+
+    # Apply chronic/high-risk recommendation logic
+    if health_status in ["chronic", "high_risk"]:
+        if free_cash > 0 and savings > 0:
+            if underinsured:
+                st.success("🧠 Recommended Plan: Capital-Bridge Plan (for chronic users with free cash and savings)")
+            else:
+                st.success("🧠 Recommended Plan: Protection-First Plan (chronic user with adequate insurance)")
+        elif savings > 0:
+            st.success("🧠 Recommended Plan: Capital-First Plan (chronic user with savings but low income)")
+        else:
+            st.success("🧠 Recommended Plan: Capital-First Plan (chronic user with limited financial capacity)")
+        return
+    # --- End inserted logic ---
     st.markdown("### 🤖 Personalized Strategy Breakdown")
 
 

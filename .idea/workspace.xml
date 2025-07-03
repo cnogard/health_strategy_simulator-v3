@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="e4e88ba1-64a1-4cdc-85c1-b00bc4c9bab6" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/health_strategy_simulator-v4.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/FAQ.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/chronic_module.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cost_library.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pension_utils.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/recommendation_logic.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/step_1.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/step_2.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/step_3.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/step_4.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/step_5.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/step_6.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/health_strategy_simulator-v3.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/health_simulator_app.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/high_risk_module.py" beforeDir="false" afterPath="$PROJECT_DIR$/high_risk_module.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/projected_health_risk.py" beforeDir="false" afterPath="$PROJECT_DIR$/projected_health_risk.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/simulator_core.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulator_core.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;cnogard&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/cnogard/health_strategy_simulator-v3.git&quot;,
+    &quot;accountId&quot;: &quot;86a365f0-a561-46c8-81a7-b70f2860789e&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4
+}</component>
+  <component name="ProjectId" id="2ypQ2wV2f9tN8OQdbzvovtsZojy" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.cost_library.executor": "Run",
+    "Python.health_simulator_app_v4.executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.projected_health_risk_v4.executor": "Run",
+    "Python.simulator_core.executor": "Run",
+    "Python.step_1.executor": "Run",
+    "Python.step_2.executor": "Run",
+    "Python.step_4.executor": "Run",
+    "Python.step_5.executor": "Run",
+    "Python.step_6.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "settings.editor.selected.configurable": "preferences.lookFeel"
+  }
+}]]></component>
+  <component name="RunManager">
+    <configuration name="step_4" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="health_strategy_simulator-v4" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/step_4.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.step_4" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-890ed5b35930-d9c5bdb153f4-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-251.23774.444" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="e4e88ba1-64a1-4cdc-85c1-b00bc4c9bab6" name="Changes" comment="" />
+      <created>1750528831960</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1750528831960</updated>
+    </task>
+    <servers />
+  </component>
+</project>

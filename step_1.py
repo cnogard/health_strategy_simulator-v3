@@ -81,18 +81,15 @@ def run_step_1(tab1):
 
 
         insurance_type = st.radio("Insurance Type", ["Employer-based", "Marketplace / Self-insured", "None"])
-        # --- Deductible Level dropdown for ESI and ACA ---
+        # --- Deductible Choice for ESI and ACA ---
+        deductible_choice = None
         if insurance_type in ["Employer-based", "Marketplace / Self-insured"]:
-            # Map UI to internal insurance type
-            insurance_type_internal = "ESI" if insurance_type == "Employer-based" else "ACA"
-            deductible_level = st.selectbox(
-                "Select your deductible level:",
+            deductible_choice = st.selectbox(
+                "What is your annual deductible amount?",
                 options=["$0", "$500", "$1,500"],
-                index=1
+                help="This affects your premium and OOP range. Higher deductibles lower premiums but increase upfront costs."
             )
-            st.session_state["deductible_level"] = deductible_level
-        else:
-            deductible_level = None
+            st.session_state["deductible_level"] = deductible_choice
 
         from insurance_module import get_insurance_costs_over_time
 
@@ -110,7 +107,6 @@ def run_step_1(tab1):
                 "family_status": family_status,
                 "insurance_type": "ESI" if insurance_type == "Employer-based" else ("ACA" if insurance_type == "Marketplace / Self-insured" else "Uninsured")
             }
-            # --- Deductible-based premium and OOP assignment (overrides previous logic for ESI/ACA) ---
             # Map UI to internal insurance type
             if insurance_type == "Employer-based":
                 insurance_type_key = "ESI"
@@ -118,61 +114,31 @@ def run_step_1(tab1):
                 insurance_type_key = "ACA"
             else:
                 insurance_type_key = "Uninsured"
-            # Deductible-based logic
-            if insurance_type_key == "ESI":
-                # Use deductible_level as selected above
-                deductible_level_selected = st.session_state.get("deductible_level", "$500")
-                # --- Begin new ESI logic with family_status ---
-                if family_status == "single":
-                    if deductible_level_selected == "$0":
-                        premium_value = 1847
-                        oop_value = 1000
-                    elif deductible_level_selected == "$500":
-                        premium_value = 1600
-                        oop_value = 1800
-                    else:  # $1500 deductible
-                        premium_value = 1541
-                        oop_value = 2200
-                else:  # family
-                    if deductible_level_selected == "$0":
-                        premium_value = 5281
-                        oop_value = 3000
-                    elif deductible_level_selected == "$500":
-                        premium_value = 4560
-                        oop_value = 4000
-                    else:  # $1500 deductible
-                        premium_value = 4300
-                        oop_value = 5000
-                employee_premium = premium_value
+
+            # --- New Deductible-based logic for ESI and ACA ---
+            if insurance_type_key in ["ESI", "ACA"]:
+                # Use the deductible_choice
+                selected_deductible = st.session_state.get("deductible_level", "$500")
+                # Use new logic as per instructions
+                if selected_deductible == "$0":
+                    annual_premium = 1847 if insurance_type_key == "ESI" else 6800
+                    oop_estimate = 1000
+                elif selected_deductible == "$500":
+                    annual_premium = 1600 if insurance_type_key == "ESI" else 5950
+                    oop_estimate = 1800
+                else:  # "$1,500"
+                    annual_premium = 1327 if insurance_type_key == "ESI" else 5100
+                    oop_estimate = 2200
+                employee_premium = annual_premium
                 employer_premium = 0
-                annual_oop = oop_value
+                annual_oop = oop_estimate
                 # Save to session_state for downstream use
-                st.session_state["deductible_level"] = deductible_level_selected
-                st.session_state["premium"] = premium_value
-                st.session_state["oop_cost"] = oop_value
+                st.session_state["deductible_level"] = selected_deductible
+                st.session_state["premium"] = annual_premium
+                st.session_state["oop_cost"] = oop_estimate
                 # Save year 1 values for downstream use and apply across all years
-                st.session_state["premium_year1"] = premium_value
-                st.session_state["oop_year1"] = oop_value
-            elif insurance_type_key == "ACA":
-                deductible_level_selected = st.session_state.get("deductible_level", "$500")
-                if deductible_level_selected == "$0":
-                    premium = 6800  # Gold-like ACA
-                    oop_cost = 1000
-                elif deductible_level_selected == "$500":
-                    premium = 5900  # Silver
-                    oop_cost = 2200
-                else:
-                    premium = 5100  # Bronze
-                    oop_cost = 3500
-                employee_premium = premium
-                employer_premium = 0
-                annual_oop = oop_cost
-                st.session_state["deductible_level"] = deductible_level_selected
-                st.session_state["premium"] = premium
-                st.session_state["oop_cost"] = oop_cost
-                # Save year 1 values for downstream use and apply across all years
-                st.session_state["premium_year1"] = premium
-                st.session_state["oop_year1"] = oop_cost
+                st.session_state["premium_year1"] = annual_premium
+                st.session_state["oop_year1"] = oop_estimate
             elif insurance_type_key == "Uninsured":
                 employee_premium = 0
                 employer_premium = 0

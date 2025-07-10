@@ -40,6 +40,13 @@ with tab_faq:
     st.subheader("📘 Capital Care 360 FAQ")
     st.markdown("Here are the most frequently asked questions about the simulator and how it works.")
 
+    faq_path = "faq.md"
+    if os.path.exists(faq_path):
+        with open(faq_path, "r") as f:
+            st.markdown(f.read())
+    else:
+        st.warning("FAQ file not found.")
+
 with tab0:
     st.image("Tuku_Default_Health_Adviser.png", width=80)
     st.title("Welcome to Tuku, Your Health & Financial Strategy Simulator")
@@ -180,13 +187,6 @@ with tab0:
                 st.error(f"⚠️ Import failed: {e}")
 
     st.success("Ready? Use the sidebar or click above to start Step 1.")
-
-faq_path = "faq.md"
-if os.path.exists(faq_path):
-    with open(faq_path, "r") as f:
-        st.markdown(f.read())
-else:
-    st.warning("FAQ file not found.")
 
 with tab1:
     run_step_1(tab1)

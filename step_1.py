@@ -133,6 +133,7 @@ def run_step_1(tab1):
             base_oop_ratio = get_base_oop_ratio(insurance_type_key)
             base_oop = base_full_cost * base_oop_ratio
             oop_correction = get_oop_correction_ratio(user_age, insurance_type_key, health_status)
+            # Always assume user hits the full risk-adjusted OOP every year (no max cap logic)
             risk_adjusted_oop = base_oop * oop_correction
             # --- Begin explicit insurance type handling for premium ---
             employee_premium = 0
@@ -151,10 +152,24 @@ def run_step_1(tab1):
                 employer_premium = 0
             employer_premium = 0  # Explicitly ignore employer's contribution
             annual_oop = risk_adjusted_oop
+            # Store monthly OOP in session state for consistency
+            st.session_state["monthly_oop"] = annual_oop / 12
         else:
             employee_premium = st.number_input("Employee Contribution ($/yr)", min_value=0, value=2000)
             employer_premium = st.number_input("Employer Contribution ($/yr)", min_value=0, value=6000 if insurance_type == "Employer-based" else 0)
             annual_oop = st.number_input("Estimated Annual OOP ($/yr)", min_value=0, value=4800)
+            # Store monthly OOP in session state for consistency
+            st.session_state["monthly_oop"] = annual_oop / 12
+        # --- Uninsured lifetime-averaged OOP logic for monthly_oop ---
+        if insurance_type == "None":
+            # Use new logic for uninsured: lifetime-averaged OOP by health status
+            if health_status == "healthy":
+                annual_oop_uninsured = 75000 / 60
+            elif health_status == "chronic":
+                annual_oop_uninsured = 459000 / 60
+            else:  # high-risk
+                annual_oop_uninsured = 472000 / 60
+            st.session_state["monthly_oop"] = annual_oop_uninsured / 12
 
         # Premium inflation rate (moved from Step 2)
         st.subheader("📈 Inflation Assumption")
@@ -309,7 +324,7 @@ def run_step_1(tab1):
                         for year in range(n_years)
                     ]
                 else:
-                    # Use explicit OOP ratios for ESI and ACA
+                    # Always apply the full risk-adjusted OOP every year (no max OOP logic)
                     def get_base_oop_ratio(insurance_type_key):
                         if insurance_type_key == "ESI":
                             return 0.20  # 20% of full cost for ESI
@@ -331,6 +346,7 @@ def run_step_1(tab1):
                         base_oop_ratio = get_base_oop_ratio(insurance_type_key)
                         base_oop = base_full_cost * base_oop_ratio
                         oop_correction = get_oop_correction_ratio(age_this_year, insurance_type_key, health_status)
+                        # Always apply the full OOP (no min/max logic)
                         oop = base_oop * oop_correction
                         total_oop_over_time.append(oop)
                 cost_df["Premiums"] = premiums
@@ -393,7 +409,7 @@ def run_step_1(tab1):
             st.markdown(f"- **Total Year 1 Cost (estimated)**: ${round(cost_df['Healthcare Cost'].iloc[first_year]):,}")
             # Store monthly equivalents for later use (Step 6, etc.)
             st.session_state["monthly_premium"] = round(st.session_state.employee_premium / 12)
-            st.session_state["monthly_oop"] = round(cost_df["OOP Cost"].iloc[first_year] / 12)
+            # Always store monthly_oop as calculated above (already set for all cases)
             # Reinforce zero premiums for uninsured in session state
             if insurance_type_key == "Uninsured":
                 st.session_state.employee_premium = 0

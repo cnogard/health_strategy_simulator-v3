@@ -328,7 +328,7 @@ def run_step_4(tab4):
                 else:
                     filtered_labels, filtered_values = zip(*filtered_sources)
                     st.markdown("#### Retirement Income Sources")
-                    fig_pie, ax_pie = plt.subplots(figsize=(1.8, 1.8))
+                    fig_pie, ax_pie = plt.subplots(figsize=(4, 4))
                     def filter_autopct(pct):
                         return f"{pct:.1f}%" if pct > 2 else ''
                     wedges, texts, autotexts = ax_pie.pie(

@@ -81,15 +81,25 @@ def run_step_1(tab1):
 
 
         insurance_type = st.radio("Insurance Type", ["Employer-based", "Marketplace / Self-insured", "None"])
+
+        # --- Deductible Level Prompt (always, right after insurance type selection) ---
+        deductible_choice = st.selectbox(
+            "Select your deductible level (drives premium and OOP logic)",
+            options=["None", "$0", "$500", "$1,500"],
+            index=0
+        )
+        st.session_state["deductible_choice"] = deductible_choice
+
         # --- Deductible Choice for ESI and ACA ---
-        deductible_choice = None
+        deductible_level = None
         if insurance_type in ["Employer-based", "Marketplace / Self-insured"]:
-            deductible_choice = st.selectbox(
-                "What is your annual deductible amount?",
-                options=["$0", "$500", "$1,500"],
-                help="This affects your premium and OOP range. Higher deductibles lower premiums but increase upfront costs."
-            )
-            st.session_state["deductible_level"] = deductible_choice
+            # For downstream compatibility, set deductible_level as before, but mapped from new choice
+            # If user picks "None", treat as "$500" (or default logic as you wish)
+            if deductible_choice == "None":
+                deductible_level = "$500"
+            else:
+                deductible_level = deductible_choice
+            st.session_state["deductible_level"] = deductible_level
 
         from insurance_module import get_insurance_costs_over_time
 

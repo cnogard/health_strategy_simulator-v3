@@ -80,7 +80,7 @@ def run_step_1(tab1):
                 )
 
 
-        insurance_type = st.radio("Insurance Type", ["Employer-based", "Marketplace / Self-insured", "None"])
+        insurance_type = st.radio("Insurance Type", ["Employer-based", "Marketplace / Self-insured", "None"], index=2)
 
         # --- Deductible Level Prompt (always, right after insurance type selection) ---
         deductible_choice = st.selectbox(

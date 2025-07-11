@@ -215,135 +215,139 @@ def run_step_2(tab3):
             )
 
             if st.button("Run Step 2"):
-                    years = len(cost_df)
-                    user_age = profile.get("age", 30)
-                    retirement_age = 65
-                    # --- Revised Retirement-aware income projection (stop regular income after retirement) ---
-                    # Use only income_growth in income projection (remove inflation_rate)
-                    income_proj = [
-                        net_income_annual * ((1 + income_growth) ** i) if (
-                            user_age + i) < retirement_age else net_income_annual * 0.4
-                        for i in range(years)
-                    ]
+                years = len(cost_df)
+                user_age = profile.get("age", 30)
+                retirement_age = 65
+                # --- Revised Retirement-aware income projection (stop regular income after retirement) ---
+                income_proj = [
+                    net_income_annual * ((1 + income_growth) ** i) if (
+                        user_age + i) < retirement_age else net_income_annual * 0.4
+                    for i in range(years)
+                ]
 
-                    # --- Partner income projection using new variables ---
-                    if family_status == "family":
-                        income_proj_partner = []
-                        for i in range(years):
-                            partner_age_i = partner_age + i  # partner's age this year
-                            if partner_age_i < 65:
-                                income = net_income_annual_partner * ((1 + income_growth_partner) ** i)
-                            else:
-                                income = 0
-                            income_proj_partner.append(income)
-                    else:
-                        income_proj_partner = [0 for _ in range(years)]
-
-                    # --- Combined income projection ---
-                    if family_status == "family":
-                        combined_income_proj = [user + partner for user, partner in
-                                                zip(income_proj, income_proj_partner)]
-                    else:
-                        combined_income_proj = income_proj
-
-                    # Store the combined projection in session state
-                    st.session_state.combined_income_proj = combined_income_proj
-
-                    # --- Revised savings and 401(k) projections: contributions before retirement, only growth after ---
-                    # User projections
-                    proj_401k = []
-                    savings_proj = []
-                    user_401k_balance = profile.get("start_401k_user", 0)
-                    current_401k = user_401k_balance
-                    current_savings = savings_start
-                    monthly_contrib_401k = (contrib_401k_employee + contrib_401k_employer) / 12
-                    monthly_savings = annual_contrib / 12
-                    growth_rate_401k = growth_401k
-                    growth_rate_savings = savings_growth
+                # --- Partner income projection using new variables ---
+                if family_status == "family":
+                    income_proj_partner = []
                     for i in range(years):
-                        age_iter = user_age + i
-                        if age_iter < retirement_age:
-                            current_401k = current_401k * (1 + growth_rate_401k + inflation_rate) + monthly_contrib_401k * 12
-                            current_savings = current_savings * (1 + growth_rate_savings + inflation_rate) + monthly_savings * 12
+                        partner_age_i = partner_age + i  # partner's age this year
+                        if partner_age_i < 65:
+                            income = net_income_annual_partner * ((1 + income_growth_partner) ** i)
                         else:
-                            current_401k = current_401k * (1 + growth_rate_401k + inflation_rate)
-                            current_savings = current_savings * (1 + growth_rate_savings + inflation_rate)
-                        proj_401k.append(current_401k)
-                        savings_proj.append(current_savings)
+                            income = 0
+                        income_proj_partner.append(income)
+                else:
+                    income_proj_partner = [0 for _ in range(years)]
 
-                    # Partner projections for family mode
-                    if family_status == "family":
-                        proj_401k_partner = []
-                        savings_proj_partner = []
-                        partner_401k_balance = profile.get("start_401k_partner", 0)
-                        current_401k_partner = partner_401k_balance
-                        # Use partner's savings if modeled separately; for now, use same as user
-                        # If you want partner's savings to be separate, add inputs and logic here.
-                        # For now, only project partner 401k.
-                        partner_age_val = profile.get("partner_age", 65)
-                        # partner_401k_contrib and partner_employer_401k_contrib already defined at top-level
-                        monthly_contrib_401k_partner = (partner_401k_contrib + partner_employer_401k_contrib) / 12
-                        growth_401k_partner = profile.get("partner_growth_401k", growth_401k)
-                        for i in range(years):
-                            age_partner = partner_age_val + i
-                            if age_partner < retirement_age:
-                                current_401k_partner = current_401k_partner * (
-                                    1 + growth_401k_partner + inflation_rate) + monthly_contrib_401k_partner * 12
-                            else:
-                                current_401k_partner = current_401k_partner * (1 + growth_401k_partner + inflation_rate)
-                            proj_401k_partner.append(current_401k_partner)
+                # --- Combined income projection ---
+                if family_status == "family":
+                    combined_income_proj = [user + partner for user, partner in
+                                            zip(income_proj, income_proj_partner)]
+                else:
+                    combined_income_proj = income_proj
+
+                # Store the combined projection in session state
+                st.session_state.combined_income_proj = combined_income_proj
+
+                # --- Revised savings and 401(k) projections: contributions before retirement, only growth after ---
+                # User projections
+                proj_401k = []
+                savings_proj = []
+                user_401k_balance = profile.get("start_401k_user", 0)
+                current_401k = user_401k_balance
+                current_savings = savings_start
+                monthly_contrib_401k = (contrib_401k_employee + contrib_401k_employer) / 12
+                monthly_savings = annual_contrib / 12
+                growth_rate_401k = growth_401k
+                growth_rate_savings = savings_growth
+                for i in range(years):
+                    age_iter = user_age + i
+                    if age_iter < retirement_age:
+                        current_401k = current_401k * (1 + growth_rate_401k + inflation_rate) + monthly_contrib_401k * 12
+                        current_savings = current_savings * (1 + growth_rate_savings + inflation_rate) + monthly_savings * 12
                     else:
-                        proj_401k_partner = [0] * years
-                    # --- Store 401k projections in session state unconditionally before marking submission ---
-                    st.session_state["proj_401k"] = proj_401k
-                    if family_status == "family":
-                        st.session_state["proj_401k_partner"] = proj_401k_partner
-                    else:
-                        st.session_state["proj_401k_partner"] = [0] * years
+                        current_401k = current_401k * (1 + growth_rate_401k + inflation_rate)
+                        current_savings = current_savings * (1 + growth_rate_savings + inflation_rate)
+                    proj_401k.append(current_401k)
+                    savings_proj.append(current_savings)
 
-                    st.session_state.monthly_income = monthly_income
-                    st.session_state.net_income_annual = net_income_annual
-                    st.session_state.income_growth = income_growth
-                    st.session_state.monthly_expenses = monthly_expenses
-                    st.session_state.debt_monthly_payment = debt_monthly_payment
-                    st.session_state.savings_start = savings_start
-                    st.session_state.savings_growth = savings_growth
-                    st.session_state.annual_contrib = annual_contrib
-                    st.session_state.savings_goals = savings_goals
-                    st.session_state.contrib_401k_employee = contrib_401k_employee
-                    st.session_state.contrib_401k_employer = contrib_401k_employer
-                    st.session_state.growth_401k = growth_401k
-                    st.session_state.income_proj = combined_income_proj
-                    st.session_state.income_proj_partner = income_proj_partner
-                    st.session_state.savings_proj = savings_proj
-                    st.session_state.proj_401k = proj_401k
+                # Partner projections for family mode
+                if family_status == "family":
+                    proj_401k_partner = []
+                    savings_proj_partner = []
+                    partner_401k_balance = profile.get("start_401k_partner", 0)
+                    current_401k_partner = partner_401k_balance
+                    partner_age_val = profile.get("partner_age", 65)
+                    monthly_contrib_401k_partner = (partner_401k_contrib + partner_employer_401k_contrib) / 12
+                    growth_401k_partner = profile.get("partner_growth_401k", growth_401k)
+                    for i in range(years):
+                        age_partner = partner_age_val + i
+                        if age_partner < retirement_age:
+                            current_401k_partner = current_401k_partner * (
+                                1 + growth_401k_partner + inflation_rate) + monthly_contrib_401k_partner * 12
+                        else:
+                            current_401k_partner = current_401k_partner * (1 + growth_401k_partner + inflation_rate)
+                        proj_401k_partner.append(current_401k_partner)
+                else:
+                    proj_401k_partner = [0] * years
+                # --- Store 401k projections in session state unconditionally before marking submission ---
+                st.session_state["proj_401k"] = proj_401k
+                if family_status == "family":
+                    st.session_state["proj_401k_partner"] = proj_401k_partner
+                else:
+                    st.session_state["proj_401k_partner"] = [0] * years
 
-                    # insurance_type already defined at top-level
-                    employee_premium = st.session_state.get("employee_premium", 0)
+                st.session_state.monthly_income = monthly_income
+                st.session_state.net_income_annual = net_income_annual
+                st.session_state.income_growth = income_growth
+                st.session_state.monthly_expenses = monthly_expenses
+                st.session_state.debt_monthly_payment = debt_monthly_payment
+                st.session_state.savings_start = savings_start
+                st.session_state.savings_growth = savings_growth
+                st.session_state.annual_contrib = annual_contrib
+                st.session_state.savings_goals = savings_goals
+                st.session_state.contrib_401k_employee = contrib_401k_employee
+                st.session_state.contrib_401k_employer = contrib_401k_employer
+                st.session_state.growth_401k = growth_401k
+                st.session_state.income_proj = combined_income_proj
+                st.session_state.income_proj_partner = income_proj_partner
+                st.session_state.savings_proj = savings_proj
+                st.session_state.proj_401k = proj_401k
 
-                    monthly_expenses = st.session_state.get("monthly_expenses", 0)
-                    debt_monthly_payment = st.session_state.get("debt_monthly_payment", 0)
+                # insurance_type already defined at top-level
+                employee_premium = st.session_state.get("employee_premium", 0)
 
-                    # Calculate available cash: net_income_monthly (user+partner) - premiums - oop - household_expenses - debt_payments - monthly_savings_contrib
-                    # Corrected logic for premium and OOP handling
-                    # OOP is already set as: oop_first_year = round(cost_df["OOP Cost"].iloc[0], 2)
+                monthly_expenses = st.session_state.get("monthly_expenses", 0)
+                debt_monthly_payment = st.session_state.get("debt_monthly_payment", 0)
+
+                # Calculate available cash projection year-over-year with premium and OOP escalation
+                available_cash_projection = []
+                for i in range(years):
+                    # Premium escalation logic
                     if insurance_type == "None":
                         premium_cost = 0
                     elif insurance_type == "Employer":
-                        premium_cost = employee_premium
+                        premium_cost = employee_premium * ((1 + inflation_rate) ** i)
                     else:  # Marketplace / Self-insured
-                        premium_cost = premium_first_year
+                        premium_cost = premium_first_year * ((1 + inflation_rate) ** i)
+                    # OOP escalation
+                    oop_cost = oop_first_year * ((1 + inflation_rate) ** i)
+                    # Household and debt projections already escalated above
+                    # Use household_proj[i], debt_proj[i]
+                    # For income, use combined_income_proj[i]
+                    # For savings contribution, assume annual_contrib (not escalated)
+                    cash = (combined_income_proj[i] / 12) - (premium_cost / 12) - (oop_cost / 12) - (household_proj[i] / 12) - (debt_proj[i] / 12) - (annual_contrib / 12)
+                    available_cash_projection.append(max(0, cash))
+                st.session_state["available_cash_projection"] = available_cash_projection
+                # For backward compatibility, set available_cash as year 1 (first year) value
+                st.session_state.available_cash = available_cash_projection[0]
 
-                    available_cash = net_income_monthly - (premium_cost / 12) - (oop_first_year / 12) - monthly_expenses - debt_monthly_payment - monthly_savings_contrib
-                    st.session_state.available_cash = max(0, available_cash)
+                st.success(
+                    f"💰 Estimated Available Cash (Post Premium + OOP): ${st.session_state.available_cash:,.0f}/month")
 
-                    st.success(
-                        f"💰 Estimated Available Cash (Post Premium + OOP): ${st.session_state.available_cash:,.0f}/month")
-
-                    # Set step2_submitted True and reset step3_submitted only after all calculations
-                    st.session_state.step2_submitted = True
-                    st.session_state.step3_submitted = False
-                    st.write("Debug: Step 2 completed.")
+                # Set step2_submitted True and reset step3_submitted only after all calculations
+                st.session_state.step2_submitted = True
+                st.session_state.step3_submitted = False
+                st.write("Debug: Step 2 completed.")
 
         if "available_cash" in st.session_state:
             rounded_cash = round(st.session_state.available_cash, 2)

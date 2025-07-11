@@ -38,26 +38,17 @@ def run_step_2(tab3):
 
             # --- 401(k)-adjusted net income calculation (401k subtracted before tax) ---
             tax_rate = est_tax_rate
-            monthly_gross_income_user = monthly_income
-            contrib_401k_employee = 0  # Ensure variable is always defined before use
-            user_401k_contribution = contrib_401k_employee
-            net_income_user = (monthly_gross_income_user - user_401k_contribution / 12) * (1 - tax_rate)
-            st.markdown(f"DEBUG: Net Income After 401(k) (User): {net_income_user}")
-            if family_status == "family":
-                partner_monthly_income = st.number_input("Partner Monthly Gross Income ($)", min_value=0,
-                                                         value=4000, key="monthly_income_partner")
-                partner_401k_contribution = st.session_state.get("partner_401k_contrib", 0)
-                net_income_partner = (partner_monthly_income - partner_401k_contribution / 12) * (1 - tax_rate)
-                st.markdown(f"DEBUG: Net Income After 401(k) (Partner): {net_income_partner}")
-            else:
-                net_income_partner = 0
-            net_income_monthly_user = net_income_user
-            net_income_monthly_partner = net_income_partner
-            total_net_income = net_income_user + net_income_partner
-            net_income_monthly = total_net_income
-            st.session_state.net_income_monthly = net_income_monthly
-            st.session_state.net_income_monthly_partner = net_income_monthly_partner
-            net_income_annual = net_income_monthly * 12
+            user_income = monthly_income * 12
+            contrib_401k_employee = 0  # Ensure variable is always defined before use, will be overwritten below
+            # contrib_401k_employee will be set below after input
+
+            # We'll calculate net_income_user after contrib_401k_employee is input, see below.
+            net_income_partner = 0
+            partner_income = 0
+            contrib_401k_partner = 0
+            net_income_monthly_partner = 0
+
+            # We'll calculate these after 401k inputs below.
 
 
             # --- Fallbacks for partner income/inputs ---
@@ -169,6 +160,34 @@ def run_step_2(tab3):
             if family_status == "family":
                 partner_401k_contribution = partner_401k_contrib
                 st.write(f"DEBUG: 401(k) Contribution (Partner): {partner_401k_contribution}")
+
+            # --- NEW: Net income after 401(k) logic ---
+            monthly_401k_contribution = contrib_401k_employee / 12
+            monthly_gross_income = user_income / 12
+            income_minus_401k = monthly_gross_income - monthly_401k_contribution
+            net_income_user = income_minus_401k * (1 - tax_rate)
+            st.write("DEBUG: Net Income After 401(k) (User):", net_income_user)
+
+            if family_status == "family":
+                partner_monthly_income = st.number_input("Partner Monthly Gross Income ($)", min_value=0,
+                                                         value=4000, key="monthly_income_partner")
+                partner_income = partner_monthly_income * 12
+                partner_monthly_401k = partner_401k_contrib / 12
+                partner_monthly_income_gross = partner_income / 12
+                partner_income_minus_401k = partner_monthly_income_gross - partner_monthly_401k
+                net_income_partner = partner_income_minus_401k * (1 - tax_rate)
+                st.write("DEBUG: Net Income After 401(k) (Partner):", net_income_partner)
+                net_income_monthly_partner = net_income_partner
+            else:
+                net_income_partner = 0
+                net_income_monthly_partner = 0
+            net_income_monthly_user = net_income_user
+            total_net_income = net_income_user + (net_income_partner if family_status == "family" else 0)
+            st.write("DEBUG: Total Net Income:", total_net_income)
+            net_income_monthly = total_net_income
+            st.session_state.net_income_monthly = net_income_monthly
+            st.session_state.net_income_monthly_partner = net_income_monthly_partner
+            net_income_annual = net_income_monthly * 12
 
             # --- Pension Income UI Block ---
             from pension_utils import DEFAULT_PENSION_VALUES

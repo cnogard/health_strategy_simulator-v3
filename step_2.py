@@ -22,7 +22,11 @@ def run_step_2(tab3):
         if "cost_df" in st.session_state and not st.session_state.get("step2_submitted"):
             cost_df = st.session_state.cost_df
             # insurance_type and profile are already defined above
-            oop_first_year = round(cost_df["OOP Cost"].iloc[0], 2)
+            if not cost_df.empty and "OOP Cost" in cost_df.columns:
+                oop_first_year = round(cost_df["OOP Cost"].iloc[0], 2)
+            else:
+                oop_first_year = 0
+                st.warning("Unable to calculate OOP for the first year. Please check Step 1 inputs.")
             premium_first_year = round(cost_df["Premiums"].iloc[0], 2)
             net_income_monthly = 0
 

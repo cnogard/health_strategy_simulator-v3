@@ -25,9 +25,12 @@ def run_step_2(tab3):
             if not cost_df.empty and "OOP Cost" in cost_df.columns:
                 oop_first_year = round(cost_df["OOP Cost"].iloc[0], 2)
             else:
-                oop_first_year = 0
+                oop_first_year = 0  # Fallback if data is missing
                 st.warning("Unable to calculate OOP for the first year. Please check Step 1 inputs.")
-            premium_first_year = round(cost_df["Premiums"].iloc[0], 2)
+            if not cost_df.empty and "Premiums" in cost_df.columns:
+                premium_first_year = round(cost_df["Premiums"].iloc[0], 2)
+            else:
+                premium_first_year = 0  # Fallback if data is missing
             net_income_monthly = 0
 
             st.markdown("### 💵 Income & Tax Estimation")

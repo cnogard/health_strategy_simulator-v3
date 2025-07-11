@@ -35,16 +35,28 @@ def run_step_2(tab3):
             est_tax_rate = st.slider("Estimated Tax Rate (%)", 0.0, 50.0, 25.0) / 100
             # --- Income growth slider moved ABOVE partner income block ---
             income_growth = st.slider("Income Growth (%)", 0.0, 10.0, 2.0) / 100
-            # --- Partner income/inputs for family, after user income ---
-            if family_status == "family":
+
+            # --- 401(k)-adjusted net income calculation ---
+            tax_rate = est_tax_rate
+            monthly_gross_income = monthly_income
+            if family_status == "single":
+                monthly_401k_contribution = st.session_state.get("monthly_401k_contribution", 0)
+                net_income_monthly_user = (monthly_gross_income - monthly_401k_contribution) * (1 - tax_rate)
+                net_income_monthly_partner = 0
+            elif family_status == "family":
                 monthly_income_partner = st.number_input("Partner Monthly Gross Income ($)", min_value=0,
                                                          value=4000, key="monthly_income_partner")
                 est_tax_rate_partner = st.slider("Estimated Tax Rate for Partner (%)", 0, 50, 20,
                                                  key="tax_rate_partner") / 100
-                net_income_monthly_partner = monthly_income_partner * (1 - est_tax_rate_partner)
+                monthly_401k_contribution_user = st.session_state.get("monthly_401k_contribution", 0)
+                monthly_401k_contribution_partner = st.session_state.get("monthly_401k_contribution_partner", 0)
+                total_401k_contribution = monthly_401k_contribution_user + monthly_401k_contribution_partner
+                net_income_monthly_user = (monthly_gross_income - monthly_401k_contribution_user) * (1 - tax_rate)
+                net_income_monthly_partner = (monthly_income_partner - monthly_401k_contribution_partner) * (1 - est_tax_rate_partner)
             else:
+                net_income_monthly_user = monthly_gross_income * (1 - tax_rate)
                 net_income_monthly_partner = 0
-            net_income_monthly_user = monthly_income * (1 - est_tax_rate)
+
             net_income_monthly = net_income_monthly_user + net_income_monthly_partner
             st.session_state.net_income_monthly = net_income_monthly
             st.session_state.net_income_monthly_partner = net_income_monthly_partner
@@ -323,6 +335,41 @@ def run_step_2(tab3):
                 monthly_expenses = st.session_state.get("monthly_expenses", 0)
                 debt_monthly_payment = st.session_state.get("debt_monthly_payment", 0)
 
+                # --- NEW: Joint income and expenses computation for available cash ---
+                # Premium escalation logic (first year only for available cash debug)
+                if insurance_type == "None":
+                    premium_cost = 0
+                elif insurance_type == "Employer":
+                    premium_cost = employee_premium
+                else:  # Marketplace / Self-insured
+                    premium_cost = premium_first_year
+                # OOP escalation (first year only)
+                oop_cost = oop_first_year
+                # Calculate monthly values for clarity (first year only)
+                monthly_premium = premium_cost / 12
+                monthly_oop = oop_cost / 12
+                monthly_household = household_proj[0] / 12
+                monthly_debt = debt_proj[0] / 12
+                # Apply joint income if family
+                total_net_income = net_income_monthly_user + net_income_monthly_partner if family_status == "family" else net_income_monthly_user
+                # Joint savings (user input is assumed joint regardless of family status)
+                monthly_savings = annual_contrib / 12
+                # Total monthly expenses
+                total_expenses = monthly_premium + monthly_oop + monthly_household + monthly_debt + monthly_savings
+                # Available cash after all expenses
+                available_cash = total_net_income - total_expenses
+                # Debug output for troubleshooting
+                st.write("DEBUG: Family Status:", family_status)
+                st.write("DEBUG: Net Income (User):", net_income_monthly_user)
+                st.write("DEBUG: Net Income (Partner):", net_income_monthly_partner)
+                st.write("DEBUG: Total Net Income:", total_net_income)
+                st.write("DEBUG: Monthly Premium:", monthly_premium)
+                st.write("DEBUG: Monthly OOP:", monthly_oop)
+                st.write("DEBUG: Household Expenses:", monthly_household)
+                st.write("DEBUG: Monthly Debt:", monthly_debt)
+                st.write("DEBUG: Monthly Savings:", monthly_savings)
+                st.write("DEBUG: Estimated Available Cash:", available_cash)
+
                 # Calculate available cash projection year-over-year with premium and OOP escalation
                 available_cash_projection = []
                 for i in range(years):
@@ -345,7 +392,10 @@ def run_step_2(tab3):
                     monthly_debt = debt_proj[i] / 12
                     monthly_savings = annual_contrib / 12
 
-                    cash = monthly_income - monthly_premium - monthly_oop - monthly_household - monthly_debt - monthly_savings
+                    # Use the same joint income/expenses logic as above for projection
+                    total_net_income_proj = monthly_income
+                    total_expenses_proj = monthly_premium + monthly_oop + monthly_household + monthly_debt + monthly_savings
+                    cash = total_net_income_proj - total_expenses_proj
                     available_cash_projection.append(max(0, cash))
                 st.session_state["available_cash_projection"] = available_cash_projection
                 # For backward compatibility, set available_cash as year 1 (first year) value

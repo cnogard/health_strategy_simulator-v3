@@ -339,7 +339,9 @@ def run_step_2(tab3):
                     # OOP escalation
                     oop_cost = oop_first_year * ((1 + inflation_rate) ** i)
                     # Calculate monthly values for clarity
-                    monthly_income = combined_income_proj[i] / 12
+                    monthly_income_user = income_proj[i] / 12
+                    monthly_income_partner = income_proj_partner[i] / 12 if family_status == "family" else 0
+                    monthly_income = monthly_income_user + monthly_income_partner
                     monthly_premium = premium_cost / 12
                     monthly_oop = oop_cost / 12
                     monthly_household = household_proj[i] / 12

@@ -319,4 +319,4 @@ def run_step_6(tab7):
             for key in list(st.session_state.keys()):
                 if key not in ["user_authenticated", "default_user_id"]:
                     del st.session_state[key]
-            st.experimental_rerun()
+            st.rerun()

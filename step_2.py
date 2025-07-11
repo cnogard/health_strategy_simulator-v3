@@ -36,28 +36,32 @@ def run_step_2(tab3):
             # --- Income growth slider moved ABOVE partner income block ---
             income_growth = st.slider("Income Growth (%)", 0.0, 10.0, 2.0) / 100
 
-            # --- 401(k)-adjusted net income calculation ---
+            # --- 401(k)-adjusted net income calculation (401k subtracted before tax) ---
             tax_rate = est_tax_rate
             monthly_gross_income = monthly_income
+            user_401k_contribution = st.session_state.get("monthly_401k_contribution", 0) * 12  # annual
             if family_status == "single":
-                monthly_401k_contribution = st.session_state.get("monthly_401k_contribution", 0)
-                net_income_monthly_user = (monthly_gross_income - monthly_401k_contribution) * (1 - tax_rate)
-                net_income_monthly_partner = 0
+                # Use annual for 401k, then divide by 12
+                user_net_income = (monthly_income - user_401k_contribution / 12) * (1 - tax_rate)
+                partner_net_income = 0
             elif family_status == "family":
-                monthly_income_partner = st.number_input("Partner Monthly Gross Income ($)", min_value=0,
+                partner_monthly_income = st.number_input("Partner Monthly Gross Income ($)", min_value=0,
                                                          value=4000, key="monthly_income_partner")
-                est_tax_rate_partner = st.slider("Estimated Tax Rate for Partner (%)", 0, 50, 20,
-                                                 key="tax_rate_partner") / 100
-                monthly_401k_contribution_user = st.session_state.get("monthly_401k_contribution", 0)
-                monthly_401k_contribution_partner = st.session_state.get("monthly_401k_contribution_partner", 0)
-                total_401k_contribution = monthly_401k_contribution_user + monthly_401k_contribution_partner
-                net_income_monthly_user = (monthly_gross_income - monthly_401k_contribution_user) * (1 - tax_rate)
-                net_income_monthly_partner = (monthly_income_partner - monthly_401k_contribution_partner) * (1 - est_tax_rate_partner)
+                partner_tax_rate = st.slider("Estimated Tax Rate for Partner (%)", 0, 50, 20,
+                                             key="tax_rate_partner") / 100
+                user_401k_contribution = st.session_state.get("monthly_401k_contribution", 0) * 12  # annual
+                partner_401k_contribution = st.session_state.get("monthly_401k_contribution_partner", 0) * 12  # annual
+                # Apply the new logic: subtract 401k before tax
+                user_net_income = (monthly_income - user_401k_contribution / 12) * (1 - tax_rate)
+                partner_net_income = (partner_monthly_income - partner_401k_contribution / 12) * (1 - partner_tax_rate)
             else:
-                net_income_monthly_user = monthly_gross_income * (1 - tax_rate)
-                net_income_monthly_partner = 0
+                user_net_income = monthly_income * (1 - tax_rate)
+                partner_net_income = 0
 
-            net_income_monthly = net_income_monthly_user + net_income_monthly_partner
+            net_income_monthly_user = user_net_income
+            net_income_monthly_partner = partner_net_income
+            total_net_income = user_net_income + partner_net_income
+            net_income_monthly = total_net_income
             st.session_state.net_income_monthly = net_income_monthly
             st.session_state.net_income_monthly_partner = net_income_monthly_partner
             net_income_annual = net_income_monthly * 12
@@ -165,6 +169,13 @@ def run_step_2(tab3):
                 # Optional: clear any previous partner values if not family
                 st.session_state.pop("partner_401k_contrib", None)
                 st.session_state.pop("partner_employer_401k_contrib", None)
+
+            # --- DEBUG: Show 401(k) contributions for user and partner ---
+            user_401k_contribution = contrib_401k_employee
+            st.write(f"DEBUG: 401(k) Contribution (User): {user_401k_contribution}")
+            if family_status == "family":
+                partner_401k_contribution = partner_401k_contrib
+                st.write(f"DEBUG: 401(k) Contribution (Partner): {partner_401k_contribution}")
 
             # --- Pension Income UI Block ---
             from pension_utils import DEFAULT_PENSION_VALUES
@@ -350,8 +361,8 @@ def run_step_2(tab3):
                 monthly_oop = oop_cost / 12
                 monthly_household = household_proj[0] / 12
                 monthly_debt = debt_proj[0] / 12
-                # Apply joint income if family
-                total_net_income = net_income_monthly_user + net_income_monthly_partner if family_status == "family" else net_income_monthly_user
+                # Apply joint income if family (already calculated above with new logic)
+                # total_net_income is already user_net_income + partner_net_income
                 # Joint savings (user input is assumed joint regardless of family status)
                 monthly_savings = annual_contrib / 12
                 # Total monthly expenses

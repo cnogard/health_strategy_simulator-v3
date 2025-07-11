@@ -3,11 +3,10 @@ def run_step_4(tab4):
     import numpy as np
     import streamlit as st
     from chronic_module import get_chronic_multiplier
-    from cost_library import get_cost
     import pandas as pd
     import matplotlib.ticker as mticker
 
-    def format_thousands(x, pos):
+    def format_thousands(x, _):
         return f"{int(round(x / 1000))}"
 
     with tab4:
@@ -69,7 +68,7 @@ def run_step_4(tab4):
             retirement_age = 65
             savings_growth_rate = st.session_state.get("savings_growth_rate", 0.03)
             k401_growth_rate = st.session_state.get("401k_growth_rate", 0.03)
-            household_growth_rate = st.session_state.get("expense_inflation", 0.025)
+            # household_growth_rate = st.session_state.get("expense_inflation", 0.025)
 
             retirement_index = retirement_age - current_age
             retirement_savings_value = savings_proj[retirement_index] if 0 <= retirement_index < len(savings_proj) else 0
@@ -77,7 +76,7 @@ def run_step_4(tab4):
             base_post_retirement_household = household_proj[retirement_index] * 0.85 if 0 <= retirement_index < len(household_proj) else None
 
             # Add post-retirement income adjustment similar to other projections
-            retirement_income_value = income_proj[retirement_index] if 0 <= retirement_index < len(income_proj) else 0
+            # retirement_income_value = income_proj[retirement_index] if 0 <= retirement_index < len(income_proj) else 0
 
             for i in range(len(savings_proj)):
                 age = current_age + i
@@ -144,8 +143,8 @@ def run_step_4(tab4):
         total_expenses = [household_proj[i] + premiums[i] + oop[i] for i in range(years)]
         surplus = [income_proj[i] - total_expenses[i] for i in range(years)]
 
-        capital_graph_df = st.session_state.get("capital_graph_df", pd.DataFrame())
-        expense_df = st.session_state.get("expense_df", pd.DataFrame())
+        # capital_graph_df = st.session_state.get("capital_graph_df", pd.DataFrame())
+        # expense_df = st.session_state.get("expense_df", pd.DataFrame())
 
         # Side-by-side Graphs: Annual Expenditures, Income, Savings + 401(k)
         if not ages or not all(len(arr) == len(ages) for arr in [household_proj, debt, premiums, oop, income_proj, savings_proj, proj_401k]):
@@ -331,15 +330,15 @@ def run_step_4(tab4):
                     fig_pie, ax_pie = plt.subplots(figsize=(4, 4))
                     def filter_autopct(pct):
                         return f"{pct:.1f}%" if pct > 2 else ''
-                    wedges, texts, autotexts = ax_pie.pie(
-                        filtered_values,
-                        labels=filtered_labels,
-                        autopct=filter_autopct,
-                        startangle=90,
-                        textprops={'fontsize': 7}
-                    )
-                    ax_pie.axis('equal')
-                    st.pyplot(fig_pie)
+            ax_pie.pie(
+                filtered_values,
+                labels=filtered_labels,
+                autopct=filter_autopct,
+                startangle=90,
+                textprops={'fontsize': 7}
+            )
+            ax_pie.axis('equal')
+            st.pyplot(fig_pie)
 
             with col_divider:
                 st.markdown("<div style='height: 160px; border-left: 1px solid #ccc;'></div>", unsafe_allow_html=True)

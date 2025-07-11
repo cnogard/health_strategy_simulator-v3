@@ -1,6 +1,6 @@
 import streamlit as st
-import matplotlib.pyplot as plt
-from insurance_module import get_insurance_costs_over_time, get_base_premium, get_oop_correction_ratio
+from simulator_core import generate_costs
+from cost_library import estimate_uninsured_oop_by_year
 from simulator_core import generate_costs
 from cost_library import estimate_uninsured_oop_by_year
 
@@ -112,7 +112,7 @@ def run_step_1(tab1):
                 deductible_level = deductible_choice
             st.session_state["deductible_level"] = deductible_level
 
-        from insurance_module import get_insurance_costs_over_time
+        # from insurance_module import get_insurance_costs_over_time  # Removed unused import
 
         st.subheader("📄 Insurance Premium and OOP Setup")
 
@@ -121,13 +121,7 @@ def run_step_1(tab1):
 
         if use_avg_inputs == "Yes":
             # Lookup values using the insurance module
-            profile = {
-                "age": user_age,
-                "gender": gender,
-                "health_status": health_status,
-                "family_status": family_status,
-                "insurance_type": "ESI" if insurance_type == "Employer-based" else ("ACA" if insurance_type == "Marketplace / Self-insured" else "Uninsured")
-            }
+            # profile variable is not used, so removed
             # Map UI to internal insurance type
             if insurance_type == "Employer-based":
                 insurance_type_key = "ESI"

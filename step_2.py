@@ -10,8 +10,6 @@ def run_step_2(tab3):
         profile = st.session_state.get("profile", {})
         family_status = profile.get("family_status", "single")
         partner_age = profile.get("partner_age", 65)
-        age = profile.get("age", 30)
-        health_status = profile.get("health_status", "healthy")
         insurance_type = profile.get("insurance_type", "None")
         partner_401k_contrib = st.session_state.get("partner_401k_contrib", 0)
         partner_employer_401k_contrib = st.session_state.get("partner_employer_401k_contrib", 0)
@@ -31,7 +29,6 @@ def run_step_2(tab3):
                 premium_first_year = round(cost_df["Premiums"].iloc[0], 2)
             else:
                 premium_first_year = 0  # Fallback if data is missing
-            net_income_monthly = 0
 
             st.markdown("### 💵 Income & Tax Estimation")
             monthly_income = st.number_input("Monthly Gross Income ($)", 0, value=5000)

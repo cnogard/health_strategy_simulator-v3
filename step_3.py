@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from chronic_module import get_chronic_multiplier
 
 # --- Risk trajectory function ---
-def get_risk_trajectory(age, health_status):
+def get_risk_trajectory(health_status):
     base_curve = {
         "healthy": [0.2 + 0.005 * i for i in range(50)],
         "chronic": [0.4 + 0.0075 * i for i in range(50)],
@@ -25,11 +25,10 @@ def run_step_3(tab4):
         chronic_multiplier = get_chronic_multiplier(user_age, user_chronic_count)
         st.session_state["chronic_multiplier"] = chronic_multiplier
         health_status = profile.get("health_status", "healthy")
-        family_history = profile.get("family_history", [])
         dependent_ages = st.session_state.get("dependent_ages", [])
         dependent_health_statuses = st.session_state.get("dependent_health_statuses", [])
 
-        user_traj = get_risk_trajectory(user_age, health_status)
+        user_traj = get_risk_trajectory(health_status)
         risk_trajectory = user_traj
         st.session_state["risk_trajectory"] = risk_trajectory
 
@@ -42,28 +41,28 @@ def run_step_3(tab4):
             partner_chronic_count = st.session_state.get("partner_chronic_count", "None").lower().replace(" ", "_")
             partner_multiplier = get_chronic_multiplier(partner_age, partner_chronic_count)
             st.session_state["partner_chronic_multiplier"] = partner_multiplier
-            partner_traj = get_risk_trajectory(partner_age, partner_health_status)
+            partner_traj = get_risk_trajectory(partner_health_status)
             risk_values.append(partner_traj[0])
             individual_ratios.append(("Partner", partner_age, partner_health_status, partner_traj[0]))
 
         for i, (dep_age, dep_status) in enumerate(zip(dependent_ages, dependent_health_statuses)):
-            dep_traj = get_risk_trajectory(dep_age, dep_status)
+            dep_traj = get_risk_trajectory(dep_status)
             risk_values.append(dep_traj[0])
             individual_ratios.append((f"Dependent #{i+1}", dep_age, dep_status, dep_traj[0]))
 
-        def compute_health_risk_ratio(profile):
-            def get_individual_risk(health_status, family_history):
-                base_risk = {"healthy": 0.20, "chronic": 0.40, "high_risk": 0.50}.get(health_status, 0.20)
-                if family_history:
+        def compute_health_risk_ratio(user_profile):
+            def get_individual_risk(status, history):
+                base_risk = {"healthy": 0.20, "chronic": 0.40, "high_risk": 0.50}.get(status, 0.20)
+                if history:
                     base_risk += 0.10
                 return min(base_risk, 1.0)
 
-            user_risk = get_individual_risk(profile.get("health_status", "healthy"), bool(profile.get("family_history", [])))
+            user_risk = get_individual_risk(user_profile.get("health_status", "healthy"), bool(user_profile.get("family_history", [])))
             partner_risk = 0
             dep_risks = []
-            if profile.get("family_status") == "family":
-                partner_risk = get_individual_risk(profile.get("partner_health_status", "healthy"), bool(profile.get("partner_family_history", [])))
-                for dep in profile.get("dependents", []):
+            if user_profile.get("family_status") == "family":
+                partner_risk = get_individual_risk(user_profile.get("partner_health_status", "healthy"), bool(user_profile.get("partner_family_history", [])))
+                for dep in user_profile.get("dependents", []):
                     dep_risks.append(get_individual_risk(dep.get("health_status", "healthy"), False))
 
             score = 0.5 * user_risk + 0.3 * partner_risk
@@ -75,7 +74,7 @@ def run_step_3(tab4):
         # Lifetime average
         family_trajectories = []
         for label, age, status, _ in individual_ratios:
-            traj = get_risk_trajectory(age, status)
+            traj = get_risk_trajectory(status)
             family_trajectories.append((label, age, status, traj))
 
         total_weight = 0
@@ -88,7 +87,6 @@ def run_step_3(tab4):
         weighted_avg_lifetime_risk = weighted_lifetime_sum / total_weight if total_weight > 0 else 0
         st.session_state["lifetime_health_risk_ratio"] = weighted_avg_lifetime_risk
 
-        avg_health_risk_ratio = compute_health_risk_ratio(profile)
         st.subheader("🩺 Health Risk Ratio")
 
         # Updated: Side-by-side pie charts for Health Risk Ratios (Health Risk vs Remaining)
@@ -112,7 +110,7 @@ def run_step_3(tab4):
             sizes2,
             labels=labels,
             colors=colors,
-            autopct=lambda pct: f"{pct:.0f}%" if pct > 0 and pct < 100 and pct > 50 else "",
+            autopct=lambda pct: f"{pct:.0f}%" if 50 < pct < 100 else "",
             startangle=90
         )
         ax2.axis("equal")

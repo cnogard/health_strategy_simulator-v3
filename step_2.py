@@ -429,8 +429,9 @@ def run_step_2(tab3):
                 # For backward compatibility, set available_cash as year 1 (first year) value
                 st.session_state.available_cash = available_cash_projection[0]
 
+                estimated_available_cash = st.session_state.available_cash
                 st.success(
-                    f"💰 Estimated Available Cash (Post Premium + OOP): ${st.session_state.available_cash:,.0f}/month")
+                    f"💰 Estimated Available Cash (Post Premium + OOP): ${estimated_available_cash:,.0f}/month")
 
                 # Set step2_submitted True and reset step3_submitted only after all calculations
                 st.session_state.step2_submitted = True

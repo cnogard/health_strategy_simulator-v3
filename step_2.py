@@ -38,33 +38,21 @@ def run_step_2(tab3):
 
             # --- 401(k)-adjusted net income calculation (401k subtracted before tax) ---
             tax_rate = est_tax_rate
-            monthly_gross_income = monthly_income
-            user_401k_contribution = st.session_state.get("monthly_401k_contribution", 0) * 12  # annual
-            if family_status == "single":
-                # Use annual for 401k, then divide by 12
-                user_net_income = (monthly_income - user_401k_contribution / 12) * (1 - tax_rate)
-                partner_net_income = 0
-                st.write(f"DEBUG: Net Income After 401(k) (User): {user_net_income}")
-            elif family_status == "family":
+            monthly_gross_income_user = monthly_income
+            user_401k_contribution = contrib_401k_employee
+            net_income_user = (monthly_gross_income_user - user_401k_contribution / 12) * (1 - tax_rate)
+            st.markdown(f"DEBUG: Net Income After 401(k) (User): {net_income_user}")
+            if family_status == "family":
                 partner_monthly_income = st.number_input("Partner Monthly Gross Income ($)", min_value=0,
                                                          value=4000, key="monthly_income_partner")
-                partner_tax_rate = st.slider("Estimated Tax Rate for Partner (%)", 0, 50, 20,
-                                             key="tax_rate_partner") / 100
-                user_401k_contribution = st.session_state.get("monthly_401k_contribution", 0) * 12  # annual
-                partner_401k_contribution = st.session_state.get("monthly_401k_contribution_partner", 0) * 12  # annual
-                # Apply the new logic: subtract 401k before tax
-                user_net_income = (monthly_income - user_401k_contribution / 12) * (1 - tax_rate)
-                partner_net_income = (partner_monthly_income - partner_401k_contribution / 12) * (1 - partner_tax_rate)
-                st.write(f"DEBUG: Net Income After 401(k) (User): {user_net_income}")
-                st.write(f"DEBUG: Net Income After 401(k) (Partner): {partner_net_income}")
+                partner_401k_contribution = st.session_state.get("partner_401k_contrib", 0)
+                net_income_partner = (partner_monthly_income - partner_401k_contribution / 12) * (1 - tax_rate)
+                st.markdown(f"DEBUG: Net Income After 401(k) (Partner): {net_income_partner}")
             else:
-                user_net_income = monthly_income * (1 - tax_rate)
-                partner_net_income = 0
-                st.write(f"DEBUG: Net Income After 401(k) (User): {user_net_income}")
-
-            net_income_monthly_user = user_net_income
-            net_income_monthly_partner = partner_net_income
-            total_net_income = user_net_income + partner_net_income
+                net_income_partner = 0
+            net_income_monthly_user = net_income_user
+            net_income_monthly_partner = net_income_partner
+            total_net_income = net_income_user + net_income_partner
             net_income_monthly = total_net_income
             st.session_state.net_income_monthly = net_income_monthly
             st.session_state.net_income_monthly_partner = net_income_monthly_partner

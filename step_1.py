@@ -140,7 +140,6 @@ def run_step_1(tab1):
             if insurance_type_key in ["ESI", "ACA"]:
                 # Use the deductible_choice
                 selected_deductible = st.session_state.get("deductible_level", "$500")
-                # Use new logic as per instructions
                 if selected_deductible == "$0":
                     annual_premium = 1847 if insurance_type_key == "ESI" else 6800
                     oop_estimate = 1000
@@ -150,6 +149,15 @@ def run_step_1(tab1):
                 else:  # "$1,500"
                     annual_premium = 1327 if insurance_type_key == "ESI" else 5100
                     oop_estimate = 2200
+                # --- Apply health risk multiplier before inflation ---
+                if health_status == "chronic":
+                    multiplier = 1.2
+                elif health_status == "high_risk":
+                    multiplier = 1.5
+                else:
+                    multiplier = 1.0
+                annual_premium *= multiplier
+                oop_estimate *= multiplier
                 employee_premium = annual_premium
                 employer_premium = 0
                 annual_oop = oop_estimate
@@ -193,6 +201,15 @@ def run_step_1(tab1):
             employee_premium = st.number_input("Employee Contribution ($/yr)", min_value=0, value=2000)
             employer_premium = st.number_input("Employer Contribution ($/yr)", min_value=0, value=6000 if insurance_type == "Employer-based" else 0)
             annual_oop = st.number_input("Estimated Annual OOP ($/yr)", min_value=0, value=4800)
+            # --- Apply health risk multiplier before inflation ---
+            if health_status == "chronic":
+                multiplier = 1.2
+            elif health_status == "high_risk":
+                multiplier = 1.5
+            else:
+                multiplier = 1.0
+            employee_premium *= multiplier
+            annual_oop *= multiplier
             # Store monthly OOP and premium in session state for consistency
             st.session_state["monthly_oop"] = annual_oop / 12
             st.session_state["monthly_premium"] = round(employee_premium / 12)
@@ -320,20 +337,27 @@ def run_step_1(tab1):
             base_employer_premium = st.session_state.get("employer_premium", 0)
             # --- Use insurance_module's premium_list/oop_list if available and user chose averages ---
             use_avg_inputs_bool = (use_avg_inputs == "Yes")
-            # If using national averages, use deductible-based values for projections if ESI/ACA, otherwise previous logic
+            # --- Build inflation-adjusted cost projections with health and Medicare adjustment ---
             if use_avg_inputs_bool:
-                def extend_to_length(lst, n):
-                    if len(lst) >= n:
-                        return lst[:n]
-                    elif len(lst) == 0:
-                        return [0] * n
-                    else:
-                        return lst + [lst[-1]] * (n - len(lst))
-                # For ESI/ACA, use deductible-based premium and OOP for all years
+                # For ESI/ACA, use deductible-based premium and OOP for all years, with inflation and Medicare adjustment
                 if insurance_type_key in ["ESI", "ACA"]:
-                    premiums = [st.session_state.get("premium", 0)] * n_years
+                    base_premium = st.session_state.get("premium", 0)
+                    base_oop = st.session_state.get("oop_cost", 0)
+                    inflation_rate = premium_inflation
+                    premium_years = []
+                    oop_years = []
+                    for i in range(n_years):
+                        age = start_age + i
+                        adj_premium = base_premium * ((1 + inflation_rate) ** i)
+                        adj_oop = base_oop * ((1 + inflation_rate) ** i)
+                        if age >= 65:
+                            adj_premium *= 0.5
+                            adj_oop *= 0.7
+                        premium_years.append(adj_premium)
+                        oop_years.append(adj_oop)
+                    premiums = premium_years
                     employer_premiums = [0] * n_years
-                    total_oop_over_time = [st.session_state.get("oop_cost", 0)] * n_years
+                    total_oop_over_time = oop_years
                 elif insurance_type_key == "Uninsured":
                     base_full_costs = {
                         'healthy': 5000,
@@ -357,9 +381,10 @@ def run_step_1(tab1):
                 cost_df["OOP Cost"] = total_oop_over_time
                 cost_df["Healthcare Cost"] = cost_df["OOP Cost"] + cost_df["Premiums"]
             else:
-                # Build premium projections with correction factors (legacy logic)
+                # Build premium and OOP projections with correction factors and inflation, plus Medicare adjustment
                 employee_premiums = []
                 employer_premiums = []
+                oop_years = []
                 # --- Ensure oop_pct is defined ---
                 oop_pct = 0.25  # Default to 25% of medical costs if not otherwise defined
                 for i in range(n_years):
@@ -375,19 +400,20 @@ def run_step_1(tab1):
                     if age >= 65 and insurance_type_key == "ESI":
                         emp_prem = medicare_employee_value
                         emr_prem = medicare_employer_value
+                        # For OOP: use base_oop * inflation, then Medicare adjustment
+                        adj_oop = st.session_state.get("oop_cost", 0) * ((1 + premium_inflation) ** i)
+                        adj_oop *= 0.7
                     else:
                         emp_prem = base_employee_premium * ((1 + premium_inflation) ** i) * correction
                         emr_prem = base_employer_premium * ((1 + premium_inflation) ** i) * correction
+                        adj_oop = st.session_state.get("oop_cost", 0) * ((1 + premium_inflation) ** i) * correction
                     employee_premiums.append(emp_prem)
                     employer_premiums.append(emr_prem)
+                    oop_years.append(adj_oop)
                 premiums = employee_premiums
                 cost_df["Premiums"] = premiums
                 cost_df["Employer Premiums"] = employer_premiums
-                # OOP logic unchanged
-                if oop_pct is not None:
-                    cost_df["OOP Cost"] = cost_df["Healthcare Cost"] * oop_pct
-                else:
-                    cost_df["OOP Cost"] = [annual_oop * ((1 + premium_inflation) ** i) for i in range(len(cost_df))]
+                cost_df["OOP Cost"] = oop_years
                 cost_df["Healthcare Cost"] = cost_df["OOP Cost"] + cost_df["Premiums"]
 
             st.session_state.cost_df = cost_df

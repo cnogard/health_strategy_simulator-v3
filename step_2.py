@@ -396,7 +396,8 @@ def run_step_2(tab3):
                 st.write("DEBUG: Household Expenses:", monthly_household)
                 st.write("DEBUG: Monthly Debt:", monthly_debt)
                 st.write("DEBUG: Monthly Savings:", monthly_savings)
-                st.write("DEBUG: Estimated Available Cash:", available_cash)
+                # Display available cash using markdown as specified
+                st.markdown(f"💰 **Estimated Available Cash (Post Premium + OOP):** ${available_cash:,.2f}/month")
 
                 # Calculate available cash projection year-over-year with premium and OOP escalation
                 available_cash_projection = []
@@ -430,8 +431,7 @@ def run_step_2(tab3):
                 st.session_state.available_cash = available_cash_projection[0]
 
                 estimated_available_cash = st.session_state.available_cash
-                st.success(
-                    f"💰 Estimated Available Cash (Post Premium + OOP): ${estimated_available_cash:,.0f}/month")
+                # No need to display available cash again here, already shown above
 
                 # Set step2_submitted True and reset step3_submitted only after all calculations
                 st.session_state.step2_submitted = True

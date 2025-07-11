@@ -36,6 +36,12 @@ def run_step_2(tab3):
             # --- Income growth slider moved ABOVE partner income block ---
             income_growth = st.slider("Income Growth (%)", 0.0, 10.0, 2.0) / 100
 
+            # --- Partner income/tax/growth fields (re-inserted) ---
+            if family_status == "family":
+                partner_gross_income = st.number_input("Partner's Monthly Gross Income ($)", min_value=0, value=8000)
+                partner_tax_rate = st.number_input("Partner's Tax Rate (%)", min_value=0.0, max_value=100.0, value=25.0)
+                partner_income_growth = st.number_input("Partner's Expected Income Growth Rate (%)", min_value=0.0, max_value=20.0, value=3.0)
+
             # --- 401(k)-adjusted net income calculation (401k subtracted before tax) ---
             tax_rate = est_tax_rate
             user_income = monthly_income * 12
@@ -56,8 +62,13 @@ def run_step_2(tab3):
             income_growth_partner = 0
             # --- Partner income/inputs for family ---
             if family_status == "family":
+                # Use the new partner fields if present, else fallback
+                partner_gross_income_val = partner_gross_income if "partner_gross_income" in locals() else 0
+                partner_tax_rate_val = partner_tax_rate / 100 if "partner_tax_rate" in locals() else tax_rate
+                partner_income_growth_val = partner_income_growth / 100 if "partner_income_growth" in locals() else 0.03
+                net_income_monthly_partner = (partner_gross_income_val - (partner_401k_contrib / 12)) * (1 - partner_tax_rate_val)
                 net_income_annual_partner = net_income_monthly_partner * 12
-                income_growth_partner = st.slider("Partner's Income Growth Rate (%)", 0.0, 10.0, 3.0) / 100
+                income_growth_partner = partner_income_growth_val
 
             # --- 🛒 Household Expenses ---
             st.markdown("### 🛒 Household Expenses")
@@ -169,15 +180,9 @@ def run_step_2(tab3):
             st.write("DEBUG: Net Income After 401(k) (User):", net_income_user)
 
             if family_status == "family":
-                partner_monthly_income = st.number_input("Partner Monthly Gross Income ($)", min_value=0,
-                                                         value=4000, key="monthly_income_partner")
-                partner_income = partner_monthly_income * 12
-                partner_monthly_401k = partner_401k_contrib / 12
-                partner_monthly_income_gross = partner_income / 12
-                partner_income_minus_401k = partner_monthly_income_gross - partner_monthly_401k
-                net_income_partner = partner_income_minus_401k * (1 - tax_rate)
-                st.write("DEBUG: Net Income After 401(k) (Partner):", net_income_partner)
-                net_income_monthly_partner = net_income_partner
+                # Use the new partner fields for net income calculation
+                st.write("DEBUG: Net Income After 401(k) (Partner):", net_income_monthly_partner)
+                net_income_partner = net_income_monthly_partner
             else:
                 net_income_partner = 0
                 net_income_monthly_partner = 0

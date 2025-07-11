@@ -136,19 +136,44 @@ def run_step_1(tab1):
             else:
                 insurance_type_key = "Uninsured"
 
-            # --- New Deductible-based logic for ESI and ACA ---
+            # --- New Deductible-based logic for ESI and ACA, with family scaling for ACA ---
             if insurance_type_key in ["ESI", "ACA"]:
                 # Use the deductible_choice
                 selected_deductible = st.session_state.get("deductible_level", "$500")
-                if selected_deductible == "$0":
-                    annual_premium = 1847 if insurance_type_key == "ESI" else 6800
-                    oop_estimate = 1000
-                elif selected_deductible == "$500":
-                    annual_premium = 1600 if insurance_type_key == "ESI" else 5950
-                    oop_estimate = 1800
-                else:  # "$1,500"
-                    annual_premium = 1327 if insurance_type_key == "ESI" else 5100
-                    oop_estimate = 2200
+                # Default values for ESI (do not scale for family)
+                if insurance_type_key == "ESI":
+                    if selected_deductible == "$0":
+                        annual_premium = 1847
+                        oop_estimate = 1000
+                    elif selected_deductible == "$500":
+                        annual_premium = 1600
+                        oop_estimate = 1800
+                    else:  # "$1,500"
+                        annual_premium = 1327
+                        oop_estimate = 2200
+                # ACA premiums and OOP scale for family status
+                elif insurance_type_key == "ACA":
+                    if selected_deductible == "$0":
+                        premium_single = 6800
+                        premium_family = 17000
+                        oop_single = 1000
+                        oop_family = 3000
+                    elif selected_deductible == "$500":
+                        premium_single = 5950
+                        premium_family = 15000
+                        oop_single = 1800
+                        oop_family = 4500
+                    else:  # "$1,500"
+                        premium_single = 5100
+                        premium_family = 12800
+                        oop_single = 2200
+                        oop_family = 5500
+                    if family_status == "single":
+                        annual_premium = premium_single
+                        oop_estimate = oop_single
+                    else:
+                        annual_premium = premium_family
+                        oop_estimate = oop_family
                 # --- Apply health risk multiplier before inflation ---
                 if health_status == "chronic":
                     multiplier = 1.2

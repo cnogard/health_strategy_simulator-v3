@@ -39,6 +39,7 @@ def run_step_2(tab3):
             # --- 401(k)-adjusted net income calculation (401k subtracted before tax) ---
             tax_rate = est_tax_rate
             monthly_gross_income_user = monthly_income
+            contrib_401k_employee = 0  # Ensure variable is always defined before use
             user_401k_contribution = contrib_401k_employee
             net_income_user = (monthly_gross_income_user - user_401k_contribution / 12) * (1 - tax_rate)
             st.markdown(f"DEBUG: Net Income After 401(k) (User): {net_income_user}")

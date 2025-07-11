@@ -31,10 +31,9 @@ def run_step_2(tab3):
                 premium_first_year = 0  # Fallback if data is missing
 
             st.markdown("### 💵 Income & Tax Estimation")
-            monthly_income = st.number_input("Monthly Gross Income ($)", 0, value=5000)
-            est_tax_rate = st.slider("Estimated Tax Rate (%)", 0.0, 50.0, 25.0) / 100
-            # --- Income growth slider moved ABOVE partner income block ---
-            income_growth = st.slider("Income Growth (%)", 0.0, 10.0, 2.0) / 100
+            monthly_income = st.number_input("Monthly Gross Income ($)", min_value=0, value=5000)
+            est_tax_rate = st.number_input("Tax Rate (%)", min_value=0.0, max_value=100.0, value=25.0)
+            income_growth = st.number_input("Expected Income Growth Rate (%)", min_value=0.0, max_value=20.0, value=2.0)
 
             # --- Partner income/tax/growth fields (re-inserted) ---
             if family_status == "family":

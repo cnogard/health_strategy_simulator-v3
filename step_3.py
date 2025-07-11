@@ -125,13 +125,18 @@ def run_step_3(tab4):
         with col1:
             st.image(tuku_image_path, width=60)
         with col2:
-            st.markdown("**Tuku’s Observation**: Your current health risk level is {:.0f}%. If your profile stays unchanged, your projected lifetime health risk remains around {:.0f}%. This suggests that your long-term care needs are {}. Consider preventive care and lifestyle choices to lower your future burden.".format(
-                risk_values[0]*100,
-                weighted_avg_lifetime_risk*100,
-                "manageable" if weighted_avg_lifetime_risk < 0.4 else "significant"
-            ))
-
-        st.markdown("This represents your family's projected average health burden over time.")
+            tuku_msg = (
+                f"**Tuku’s Observation**: Your current health risk level is {risk_values[0]*100:.0f}%. "
+                f"If your profile stays unchanged, your projected lifetime health risk remains around {weighted_avg_lifetime_risk*100:.0f}%. "
+                f"This suggests that your long-term care needs are {'manageable' if weighted_avg_lifetime_risk < 0.4 else 'significant'}. "
+            )
+            if weighted_avg_lifetime_risk >= 0.5:
+                tuku_msg += "You may benefit from early planning, including a dedicated capital care fund or bundled care strategy. "
+            elif weighted_avg_lifetime_risk >= 0.3:
+                tuku_msg += "Preventive care and moderate financial planning could reduce your future burden. "
+            else:
+                tuku_msg += "You're doing great. Maintain your current habits and monitor family history. "
+            st.markdown(tuku_msg)
 
         # Cost Projections
         base_premium = st.session_state.get("base_premium", 6000)
@@ -140,8 +145,20 @@ def run_step_3(tab4):
         base_premium *= chronic_multiplier
         base_oop *= chronic_multiplier
         years = len(cost_df)
-        premiums = [base_premium * ((1 + inflation) ** i) for i in range(years)]
-        oop = [base_oop * ((1 + inflation) ** i) for i in range(years)]
+        premiums = []
+        oop = []
+        for i in range(years):
+            age = user_age + i
+            premium_i = base_premium * ((1 + inflation) ** i)
+            oop_i = base_oop * ((1 + inflation) ** i)
+            if age >= 65:
+                premium_i *= 0.5
+                oop_i *= 0.7
+            premiums.append(premium_i)
+            oop.append(oop_i)
+        cost_df["Premiums"] = premiums
+        cost_df["OOP Cost"] = oop
+        st.session_state["cost_df"] = cost_df
         st.session_state["premiums"] = premiums
         st.session_state["oop"] = oop
         st.session_state["healthcare"] = [premiums[i] + oop[i] for i in range(years)]

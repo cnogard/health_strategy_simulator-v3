@@ -338,11 +338,15 @@ def run_step_2(tab3):
                         premium_cost = premium_first_year * ((1 + inflation_rate) ** i)
                     # OOP escalation
                     oop_cost = oop_first_year * ((1 + inflation_rate) ** i)
-                    # Household and debt projections already escalated above
-                    # Use household_proj[i], debt_proj[i]
-                    # For income, use combined_income_proj[i]
-                    # For savings contribution, assume annual_contrib (not escalated)
-                    cash = (combined_income_proj[i] / 12) - (premium_cost / 12) - (oop_cost / 12) - (household_proj[i] / 12) - (debt_proj[i] / 12) - (annual_contrib / 12)
+                    # Calculate monthly values for clarity
+                    monthly_income = combined_income_proj[i] / 12
+                    monthly_premium = premium_cost / 12
+                    monthly_oop = oop_cost / 12
+                    monthly_household = household_proj[i] / 12
+                    monthly_debt = debt_proj[i] / 12
+                    monthly_savings = annual_contrib / 12
+
+                    cash = monthly_income - monthly_premium - monthly_oop - monthly_household - monthly_debt - monthly_savings
                     available_cash_projection.append(max(0, cash))
                 st.session_state["available_cash_projection"] = available_cash_projection
                 # For backward compatibility, set available_cash as year 1 (first year) value

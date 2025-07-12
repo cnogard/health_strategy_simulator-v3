@@ -107,6 +107,8 @@ def run_step_1(tab1):
             )
 
         # Apply logic
+        # Retrieve insurance_type from session state if needed
+        insurance_type = st.session_state.insurance_type
         years = st.session_state.get("years_to_simulate")
         if years is None:
             years = 30
@@ -352,7 +354,7 @@ def run_step_1(tab1):
 
             st.session_state.cost_df = cost_df
             st.session_state.profile = profile
-            st.session_state.insurance_type = insurance_type
+            # Do not reassign st.session_state.insurance_type here; it is already managed by Streamlit's widget state
             # Save the year 1 (age 0) employee and employer premium for reporting and reallocation logic
             # Save first year premiums for reporting
             if use_avg_inputs_bool:

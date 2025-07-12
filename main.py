@@ -1,5 +1,6 @@
 import streamlit as st
 
+
 from step_1 import run_step_1
 from step_2 import run_step_2
 from step_3 import run_step_3
@@ -7,6 +8,9 @@ from step_4 import run_step_4
 from step_5 import run_step_5
 from step_6 import run_step_6
 
+
+import os
+from insurance_cost_model import get_insurance_costs
 
 st.set_page_config(layout="wide", page_title="Health Strategy Simulator")
 
@@ -16,8 +20,6 @@ with st.sidebar:
     code = st.text_input("Enter beta access code:", type="password")
     if code != "HSS_Beta_2025v4!":
         st.stop()
-
-import os
 
 logo_path = "logo_capitalcare360.png"
 if os.path.exists(logo_path):

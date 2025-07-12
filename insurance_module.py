@@ -90,6 +90,10 @@ def get_insurance_costs_over_time(profile, years):
             base_premium = 2400
             base_oop = 2700
 
+    # Duration logic for chronic and high-risk
+    chronic_duration = years  # Chronic conditions persist through life
+    high_risk_duration = 10  # High-risk is assumed to last 10 years
+
     print(f"DEBUG: Base Premium: {base_premium}, Base OOP: {base_oop}")
 
     national_premiums = {
@@ -117,19 +121,26 @@ def get_insurance_costs_over_time(profile, years):
     for i in range(years):
         current_age = age + i
 
+        # Duration-based health status logic
+        if health_status == "high_risk" and i >= high_risk_duration:
+            # Revert to chronic after high-risk window
+            current_health_status = "chronic"
+            current_base_premium = 3840 if family_status == "family" else 1920
+            current_base_oop = 4320 if family_status == "family" else 2160
+        else:
+            current_health_status = health_status
+            current_base_premium = base_premium
+            current_base_oop = base_oop
+
         if insurance_type == "Uninsured":
             premium = 0
             oop = uninsured_oop.get(family_status, 6500)
         else:
-            # base_premium = national_premiums.get(insurance_type_key, {}).get(family_status, 0)
-            # base_oop = national_oop.get(insurance_type_key, {}).get(family_status, 0)
-
             # Apply age and risk correction (using get_oop_correction_ratio)
             age_factor = 1 + 0.03 * max(current_age - 30, 0)
-            risk_factor = get_oop_correction_ratio(current_age, insurance_type, health_status)
-
-            premium = base_premium * age_factor * risk_factor
-            oop = base_oop * age_factor * risk_factor
+            risk_factor = get_oop_correction_ratio(current_age, insurance_type, current_health_status)
+            premium = current_base_premium * age_factor * risk_factor
+            oop = current_base_oop * age_factor * risk_factor
 
         premium_list.append(premium)
         oop_list.append(oop)

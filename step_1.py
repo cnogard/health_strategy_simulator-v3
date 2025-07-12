@@ -85,159 +85,63 @@ def run_step_1(tab1):
                 )
 
 
+        # Step 1: Insurance Type Selection
         insurance_type = st.radio(
             "Insurance Type",
             ["Employer-based", "Marketplace / Self-insured", "None"],
             index=None
         )
 
-        # --- Deductible Level Prompt (only if ESI or ACA) ---
-        if insurance_type in ["Employer-based", "Marketplace / Self-insured"]:
-            deductible_choice = st.radio(
-                "Select your deductible level (drives premium and OOP logic)",
-                ["$0", "$500", "$1,500"],
-                index=None
+        # Only show modeling method if user has insurance
+        if insurance_type != "None":
+            use_avg_inputs = st.radio(
+                "How would you like to model your healthcare costs?",
+                [
+                    "Use National Averages (Recommended)",
+                    "Enter My Own Insurance Costs"
+                ],
+                index=0
             )
         else:
-            deductible_choice = None
-        st.session_state["deductible_choice"] = deductible_choice
+            use_avg_inputs = "Uninsured"
 
-        # --- Deductible Choice for ESI and ACA ---
-        deductible_level = None
-        if insurance_type in ["Employer-based", "Marketplace / Self-insured"]:
-            # For downstream compatibility, set deductible_level as before, but mapped from new choice
-            if deductible_choice is None:
-                deductible_level = "$500"
-            else:
-                deductible_level = deductible_choice
-            st.session_state["deductible_level"] = deductible_level
-
-        # from insurance_module import get_insurance_costs_over_time  # Removed unused import
-
-        st.subheader("📄 Insurance Premium and OOP Setup")
-
-        # Determine whether to use national averages or custom inputs for premiums and OOP
-        use_avg_inputs = st.radio("Use national average insurance and OOP costs?", ["Yes", "No"], index=0)
-
-        if use_avg_inputs == "Yes":
-            # Lookup values using the insurance module
-            # profile variable is not used, so removed
-            # Map UI to internal insurance type
-            if insurance_type == "Employer-based":
-                insurance_type_key = "ESI"
-            elif insurance_type == "Marketplace / Self-insured":
-                insurance_type_key = "ACA"
-            else:
-                insurance_type_key = "Uninsured"
-
-            # --- New Deductible-based logic for ESI and ACA, with family scaling for ACA ---
-            if insurance_type_key in ["ESI", "ACA"]:
-                # Use the deductible_choice
-                selected_deductible = st.session_state.get("deductible_level", "$500")
-                # Default values for ESI (do not scale for family)
-                if insurance_type_key == "ESI":
-                    if selected_deductible == "$0":
-                        annual_premium = 1847
-                        oop_estimate = 1000
-                    elif selected_deductible == "$500":
-                        annual_premium = 1600
-                        oop_estimate = 1800
-                    else:  # "$1,500"
-                        annual_premium = 1327
-                        oop_estimate = 2200
-                # ACA premiums and OOP scale for family status
-                elif insurance_type_key == "ACA":
-                    if selected_deductible == "$0":
-                        premium_single = 6800
-                        premium_family = 17000
-                        oop_single = 1000
-                        oop_family = 3000
-                    elif selected_deductible == "$500":
-                        premium_single = 5950
-                        premium_family = 15000
-                        oop_single = 1800
-                        oop_family = 4500
-                    else:  # "$1,500"
-                        premium_single = 5100
-                        premium_family = 12800
-                        oop_single = 2200
-                        oop_family = 5500
-                    if family_status == "single":
-                        annual_premium = premium_single
-                        oop_estimate = oop_single
-                    else:
-                        annual_premium = premium_family
-                        oop_estimate = oop_family
-                # --- Apply health risk multiplier before inflation ---
-                if health_status == "chronic":
-                    multiplier = 1.2
-                elif health_status == "high_risk":
-                    multiplier = 1.5
-                else:
-                    multiplier = 1.0
-                annual_premium *= multiplier
-                oop_estimate *= multiplier
-                employee_premium = annual_premium
-                employer_premium = 0
-                annual_oop = oop_estimate
-                # Save to session_state for downstream use
-                st.session_state["deductible_level"] = selected_deductible
-                st.session_state["premium"] = annual_premium
-                st.session_state["oop_cost"] = oop_estimate
-                # Save year 1 values for downstream use and apply across all years
-                st.session_state["premium_year1"] = annual_premium
-                st.session_state["oop_year1"] = oop_estimate
-            elif insurance_type_key == "Uninsured":
-                employee_premium = 0
-                employer_premium = 0
-                # Use uninsured OOP logic below
-                # annual_oop assigned below
-            else:
-                employee_premium = 0
-                employer_premium = 0
-                annual_oop = 0
-            # For uninsured, use the original logic for OOP
-            if insurance_type_key == "Uninsured":
-                if health_status == "healthy":
-                    annual_oop_uninsured = 75000 / 60
-                elif health_status == "chronic":
-                    annual_oop_uninsured = 459000 / 60
-                else:  # high-risk
-                    annual_oop_uninsured = 472000 / 60
-                annual_oop = annual_oop_uninsured
-                # Save year 1 values for downstream use and apply across all years
-                st.session_state["premium_year1"] = 0
-                st.session_state["oop_year1"] = annual_oop_uninsured
-            # Store monthly OOP and premium in session state for consistency
-            st.session_state["monthly_oop"] = annual_oop / 12
-            st.session_state["monthly_premium"] = round(employee_premium / 12)
-            st.session_state["employee_premium"] = employee_premium
-            st.session_state["employer_premium"] = employer_premium
-            st.session_state["premium"] = employee_premium
-            st.session_state["oop_cost"] = annual_oop
-            # The rest of the logic below will use these session_state values for projections and reporting
-        else:
-            employee_premium = st.number_input("Employee Contribution ($/yr)", min_value=0, value=2000)
-            employer_premium = st.number_input("Employer Contribution ($/yr)", min_value=0, value=6000 if insurance_type == "Employer-based" else 0)
-            annual_oop = st.number_input("Estimated Annual OOP ($/yr)", min_value=0, value=4800)
-            # --- Apply health risk multiplier before inflation ---
-            if health_status == "chronic":
-                multiplier = 1.2
-            elif health_status == "high_risk":
-                multiplier = 1.5
-            else:
-                multiplier = 1.0
-            employee_premium *= multiplier
-            annual_oop *= multiplier
-            # Store monthly OOP and premium in session state for consistency
-            st.session_state["monthly_oop"] = annual_oop / 12
-            st.session_state["monthly_premium"] = round(employee_premium / 12)
-            st.session_state["employee_premium"] = employee_premium
-            st.session_state["employer_premium"] = employer_premium
-            st.session_state["premium"] = employee_premium
-            st.session_state["oop_cost"] = annual_oop
-        # --- Uninsured lifetime-averaged OOP logic for monthly_oop ---
-        # (Moved to logic above for unified assignment and session_state saving)
+        # Apply logic
+        years = st.session_state.get("years_to_simulate")
+        if years is None:
+            years = 30
+        from insurance_cost_model import get_insurance_costs
+        if insurance_type == "None":
+            # Use lifetime OOP benchmark for uninsured
+            insurance_type_key = "Uninsured"
+            premiums = 0
+            oop_costs = 75000 / 60 if health_status == "healthy" else \
+                        459000 / 60 if health_status == "chronic" else \
+                        472000 / 60
+        elif use_avg_inputs == "Use National Averages (Recommended)":
+            # Use national benchmark data for selected insurance type
+            insurance_type_key = "Employer" if insurance_type == "Employer-based" else "Marketplace"
+            premiums, oop_costs = get_insurance_costs(
+                insurance_type=insurance_type_key,
+                health_status=health_status,
+                family_status=family_status,
+                user_age=age,
+                partner_age=partner_age if family_status == "family" else None,
+                years_to_simulate=years
+            )
+        elif use_avg_inputs == "Enter My Own Insurance Costs":
+            premiums = st.number_input("Annual Premium Payment (Employee Portion)", min_value=0)
+            oop_costs = st.number_input("Estimated Annual Out-of-Pocket Costs", min_value=0)
+            insurance_type_key = "Custom"
+        # Save for year 1 usage
+        if insurance_type == "None":
+            st.session_state.premium_year_1 = 0
+            st.session_state.oop_year_1 = oop_costs
+        elif use_avg_inputs == "Use National Averages (Recommended)":
+            st.session_state.premium_year_1 = premiums[0] if isinstance(premiums, (list, tuple)) else premiums
+            st.session_state.oop_year_1 = oop_costs[0] if isinstance(oop_costs, (list, tuple)) else oop_costs
+        elif use_avg_inputs == "Enter My Own Insurance Costs":
+            st.session_state.premium_year_1 = premiums
+            st.session_state.oop_year_1 = oop_costs
 
         # Premium inflation rate (moved from Step 2)
         st.subheader("📈 Inflation Assumption")
@@ -351,6 +255,13 @@ def run_step_1(tab1):
             # For projection, use the number of years in cost_df and user's starting age
             n_years = len(cost_df)
             start_age = profile["age"]
+            # Adjust high-risk users to revert after 10 years
+            adjusted_health_status = []
+            for i in range(n_years):
+                if health_status == "high_risk" and i >= 10:
+                    adjusted_health_status.append("chronic")  # downgrade from high-risk to chronic
+                else:
+                    adjusted_health_status.append(health_status)
             # Save base premiums for reference
             base_employee_premium = st.session_state.get("employee_premium", 0)
             base_employer_premium = st.session_state.get("employer_premium", 0)
@@ -411,7 +322,7 @@ def run_step_1(tab1):
                     # Correction only for ESI or ACA, not for "None"
                     if insurance_type_key in ["ESI", "ACA"]:
                         age_bracket = get_age_bracket(age)
-                        health = health_status
+                        health = adjusted_health_status[i]
                         correction = correction_ratio.get(age_bracket, {}).get(health, {}).get(insurance_type_key, 1.0)
                     else:
                         correction = 1.0

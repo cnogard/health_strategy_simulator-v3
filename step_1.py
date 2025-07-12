@@ -134,6 +134,10 @@ def run_step_1(tab1):
             )
             print("DEBUG: Premiums Returned:", premiums)
             print("DEBUG: OOP Costs Returned:", oop_costs)
+            # --- Display correct premium and OOP values after get_insurance_costs ---
+            st.markdown(f"**Premium:** ${int(premiums[0]):,}/yr (employee contribution)")
+            st.markdown(f"**Out-of-Pocket (risk-adjusted):** ${int(oop_costs[0]):,}/yr")
+            st.markdown(f"**Total Year 1 Cost (estimated):** ${int(premiums[0] + oop_costs[0]):,}")
         elif use_avg_inputs == "Enter My Own Insurance Costs":
             premiums = st.number_input("Annual Premium Payment (Employee Portion)", min_value=0)
             oop_costs = st.number_input("Estimated Annual Out-of-Pocket Costs", min_value=0)
@@ -365,13 +369,14 @@ def run_step_1(tab1):
                 st.session_state.employer_premium = employer_premiums[0] if employer_premiums else 0
             st.session_state.premium_inflation = premium_inflation
             first_year = 0
-            st.markdown("### 📊 Year 1 Cost Breakdown:")
-            st.markdown(f"- **Premium**: ${round(st.session_state.employee_premium):,}/yr (employee contribution)")
-            if use_avg_inputs_bool:
-                st.markdown(f"- **Out-of-Pocket (risk-adjusted):** ${round(cost_df['OOP Cost'].iloc[first_year]):,}/yr")
-            else:
-                st.markdown(f"- **Out-of-Pocket:** ${round(cost_df['OOP Cost'].iloc[first_year]):,}/yr")
-            st.markdown(f"- **Total Year 1 Cost (estimated)**: ${round(cost_df['Healthcare Cost'].iloc[first_year]):,}")
+            # --- Removed previous static premium/OOP display lines in favor of above ---
+            # st.markdown("### 📊 Year 1 Cost Breakdown:")
+            # st.markdown(f"- **Premium**: ${round(st.session_state.employee_premium):,}/yr (employee contribution)")
+            # if use_avg_inputs_bool:
+            #     st.markdown(f"- **Out-of-Pocket (risk-adjusted):** ${round(cost_df['OOP Cost'].iloc[first_year]):,}/yr")
+            # else:
+            #     st.markdown(f"- **Out-of-Pocket:** ${round(cost_df['OOP Cost'].iloc[first_year]):,}/yr")
+            # st.markdown(f"- **Total Year 1 Cost (estimated)**: ${round(cost_df['Healthcare Cost'].iloc[first_year]):,}")
             # Store monthly equivalents for later use (Step 6, etc.)
             st.session_state["monthly_premium"] = round(st.session_state.employee_premium / 12)
             # Always store monthly_oop as calculated above (already set for all cases)

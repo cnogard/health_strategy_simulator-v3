@@ -408,6 +408,8 @@ def run_step_2(tab3):
                 st.write("DEBUG: Monthly Savings:", monthly_savings)
                 # Display available cash using st.success with formatting and emoji
                 st.success(f"💰 Estimated Available Cash (Post Premium + OOP): ${available_cash:,.0f}/month")
+                if available_cash < 0:
+                    st.error("⚠️ You do not have enough available cash to meet your current expenses. Please review your income, expenses, or savings strategy.")
 
                 # Calculate available cash projection year-over-year with premium and OOP escalation
                 available_cash_projection = []

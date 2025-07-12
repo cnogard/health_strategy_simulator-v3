@@ -89,11 +89,12 @@ def run_step_1(tab1):
         insurance_type = st.radio(
             "Insurance Type",
             ["Employer-based", "Marketplace / Self-insured", "None"],
-            index=None
+            index=0
         )
 
-        # Only show modeling method if user has insurance
-        if insurance_type != "None":
+        # Updated logic for cost modeling method selection
+        use_avg_inputs = None
+        if insurance_type in ["Employer-based", "Marketplace / Self-insured"]:
             use_avg_inputs = st.radio(
                 "How would you like to model your healthcare costs?",
                 [
@@ -102,7 +103,7 @@ def run_step_1(tab1):
                 ],
                 index=0
             )
-        else:
+        elif insurance_type == "None":
             use_avg_inputs = "Uninsured"
 
         # Apply logic
@@ -242,12 +243,12 @@ def run_step_1(tab1):
                 "None": "Uninsured"
             }
             # --- insurance_type_key assignment for Step 1 Calculation ---
-            if insurance_type == "None":
-                insurance_type_key = "Uninsured"
-            if insurance_type == "Marketplace / Self-insured":
-                insurance_type_key = "ACA"
             if insurance_type == "Employer-based":
                 insurance_type_key = "ESI"
+            elif insurance_type == "Marketplace / Self-insured":
+                insurance_type_key = "ACA"
+            else:
+                insurance_type_key = "Uninsured"
             # Medicare values for age 65+ (example, can make these user adjustable)
             medicare_employee_value = 1800
             medicare_employer_value = 0
@@ -266,7 +267,7 @@ def run_step_1(tab1):
             base_employee_premium = st.session_state.get("employee_premium", 0)
             base_employer_premium = st.session_state.get("employer_premium", 0)
             # --- Use insurance_module's premium_list/oop_list if available and user chose averages ---
-            use_avg_inputs_bool = (use_avg_inputs == "Yes")
+            use_avg_inputs_bool = (use_avg_inputs == "Use National Averages (Recommended)")
             # --- Build inflation-adjusted cost projections with health and Medicare adjustment ---
             if use_avg_inputs_bool:
                 # For ESI/ACA, use deductible-based premium and OOP for all years, with inflation and Medicare adjustment

@@ -60,7 +60,6 @@ def run_step_2(tab3):
             # --- 401(k) Contribution Inputs ---
             if st.session_state.family_status == "family":
                 partner_401k_contribution = st.number_input("Partner's Annual 401(k) Contribution ($)", min_value=0, value=0)
-            user_401k_contribution = st.number_input("User's Annual 401(k) Contribution ($)", min_value=0, value=0)
 
             # Fallbacks for partner income/inputs
             net_income_annual_partner = 0

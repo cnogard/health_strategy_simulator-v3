@@ -54,20 +54,33 @@ def run_step_2(tab3):
             net_income_annual_partner = 0
             income_growth_partner = 0
             net_income_monthly_partner = 0
+            # --- Corrected net income calculation ---
+            # Convert annual 401(k) contribution to monthly if needed
+            monthly_401k_user = user_401k_contribution / 12 if user_401k_contribution > 0 else 0
+            # Apply tax AFTER subtracting 401(k)
+            est_tax_rate_val = est_tax_rate / 100 if est_tax_rate > 1 else est_tax_rate
+            user_net_income = (monthly_income - monthly_401k_user) * (1 - est_tax_rate_val)
+            net_income_monthly_user = user_net_income
+
             if family_status == "family":
                 partner_gross_income_val = partner_gross_income if "partner_gross_income" in locals() else 0
-                partner_tax_rate_val = partner_tax_rate / 100 if "partner_tax_rate" in locals() else tax_rate
+                partner_tax_rate_val = partner_tax_rate / 100 if partner_tax_rate > 1 else partner_tax_rate
                 partner_income_growth_val = partner_income_growth / 100 if "partner_income_growth" in locals() else 0.03
                 # If partner_401k_contrib is not set (toggle off), set to 0
                 if "partner_401k_contrib" not in locals():
                     contrib_401k_partner = 0
                 else:
                     contrib_401k_partner = partner_401k_contrib
-                # Calculate partner net income (annual)
-                partner_net_income = (partner_gross_income_val * 12 * (1 - partner_tax_rate_val)) - contrib_401k_partner
-                net_income_monthly_partner = partner_net_income / 12
-                net_income_annual_partner = partner_net_income
+                partner_401k_contribution = contrib_401k_partner
+                monthly_401k_partner = partner_401k_contribution / 12 if partner_401k_contribution > 0 else 0
+                partner_net_income = (partner_gross_income_val - monthly_401k_partner) * (1 - partner_tax_rate_val)
+                net_income_monthly_partner = partner_net_income
+                net_income_annual_partner = partner_net_income * 12
                 income_growth_partner = partner_income_growth_val
+            else:
+                partner_net_income = 0
+                net_income_monthly_partner = 0
+                net_income_annual_partner = 0
 
             # --- 🛒 Household Expenses ---
             st.markdown("### 🛒 Household Expenses")
@@ -173,29 +186,16 @@ def run_step_2(tab3):
                 partner_401k_contribution = partner_401k_contrib
                 st.write(f"DEBUG: 401(k) Contribution (Partner): {partner_401k_contribution}")
 
-            # --- NEW: Net income after 401(k) logic ---
-            # Ensure 401k contributions are set to 0 if toggles are not activated
-            if contrib_401k_employee is None:
-                contrib_401k_employee = 0
-            if contrib_401k_partner is None:
-                contrib_401k_partner = 0
-            # Calculate user net income (annual)
-            user_net_income = (monthly_income * 12 * (1 - tax_rate)) - contrib_401k_employee
-            net_income_monthly_user = user_net_income / 12
+            # --- NEW: Net income after 401(k) logic (using corrected formula) ---
             st.write("DEBUG: Net Income After 401(k) (User):", net_income_monthly_user)
-
             if family_status == "family":
                 st.write("DEBUG: Net Income After 401(k) (Partner):", net_income_monthly_partner)
-                net_income_partner = net_income_monthly_partner
-            else:
-                net_income_partner = 0
-                net_income_monthly_partner = 0
-            total_net_income = user_net_income + (net_income_partner * 12 if family_status == "family" else 0)
+            total_net_income = user_net_income + partner_net_income
             st.write("DEBUG: Total Net Income:", total_net_income)
-            net_income_monthly = total_net_income / 12
+            net_income_monthly = total_net_income
             st.session_state.net_income_monthly = net_income_monthly
             st.session_state.net_income_monthly_partner = net_income_monthly_partner
-            net_income_annual = total_net_income
+            net_income_annual = total_net_income * 12
 
             # --- Pension Income UI Block ---
             from pension_utils import DEFAULT_PENSION_VALUES
@@ -267,8 +267,8 @@ def run_step_2(tab3):
                 retirement_age = 65
                 # --- Revised Retirement-aware income projection (stop regular income after retirement) ---
                 income_proj = [
-                    net_income_annual * ((1 + income_growth) ** i) if (
-                        user_age + i) < retirement_age else net_income_annual * 0.4
+                    net_income_monthly_user * 12 * ((1 + income_growth) ** i) if (
+                        user_age + i) < retirement_age else net_income_monthly_user * 12 * 0.4
                     for i in range(years)
                 ]
 
@@ -278,7 +278,7 @@ def run_step_2(tab3):
                     for i in range(years):
                         partner_age_i = partner_age + i  # partner's age this year
                         if partner_age_i < 65:
-                            income = net_income_annual_partner * ((1 + income_growth_partner) ** i)
+                            income = net_income_monthly_partner * 12 * ((1 + income_growth_partner) ** i)
                         else:
                             income = 0
                         income_proj_partner.append(income)

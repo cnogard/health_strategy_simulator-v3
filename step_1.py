@@ -89,10 +89,11 @@ def run_step_1(tab1):
         insurance_type = st.radio(
             "Insurance Type",
             ["Employer-based", "Marketplace / Self-insured", "None"],
-            index=0
+            index=None,
+            key="insurance_type"
         )
 
-        # Updated logic for cost modeling method selection
+        # Inserted: Only show cost modeling question for appropriate insurance types
         use_avg_inputs = None
         if insurance_type in ["Employer-based", "Marketplace / Self-insured"]:
             use_avg_inputs = st.radio(
@@ -101,10 +102,9 @@ def run_step_1(tab1):
                     "Use National Averages (Recommended)",
                     "Enter My Own Insurance Costs"
                 ],
-                index=0
+                index=0,
+                key="use_avg_inputs"
             )
-        elif insurance_type == "None":
-            use_avg_inputs = "Uninsured"
 
         # Apply logic
         years = st.session_state.get("years_to_simulate")
@@ -121,6 +121,7 @@ def run_step_1(tab1):
         elif use_avg_inputs == "Use National Averages (Recommended)":
             # Use national benchmark data for selected insurance type
             insurance_type_key = "Employer" if insurance_type == "Employer-based" else "Marketplace"
+            print("DEBUG: Calling get_insurance_costs with:", insurance_type_key, health_status, family_status, years)
             premiums, oop_costs = get_insurance_costs(
                 insurance_type=insurance_type_key,
                 health_status=health_status,
@@ -129,6 +130,8 @@ def run_step_1(tab1):
                 partner_age=partner_age if family_status == "family" else None,
                 years_to_simulate=years
             )
+            print("DEBUG: Premiums Returned:", premiums)
+            print("DEBUG: OOP Costs Returned:", oop_costs)
         elif use_avg_inputs == "Enter My Own Insurance Costs":
             premiums = st.number_input("Annual Premium Payment (Employee Portion)", min_value=0)
             oop_costs = st.number_input("Estimated Annual Out-of-Pocket Costs", min_value=0)

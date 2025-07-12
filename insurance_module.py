@@ -1,4 +1,3 @@
-# Ensure get_oop_correction_ratio is defined at the top before any import/logic
 def get_oop_correction_ratio(age, insurance_type, health_status):
     insurance_type = insurance_type.lower()
     health_status = health_status.lower()
@@ -69,18 +68,8 @@ def get_insurance_costs_over_time(profile, years):
     health_status = profile.get("health_status", "healthy")
     age = profile.get("age", 30)
 
-    # Injected base cost logic per profile
-    if family_status == "single":
-        if health_status == "healthy":
-            base_premium = 1600
-            base_oop = 1800
-        elif health_status == "chronic":
-            base_premium = 1920
-            base_oop = 2160
-        elif health_status == "high_risk":
-            base_premium = 2400
-            base_oop = 2700
-    elif family_status == "family":
+    # Injected base cost logic per profile using approved structure
+    if family_status == "family":
         if health_status == "healthy":
             base_premium = 3200
             base_oop = 3600
@@ -90,6 +79,16 @@ def get_insurance_costs_over_time(profile, years):
         elif health_status == "high_risk":
             base_premium = 4800
             base_oop = 5400
+    else:  # single
+        if health_status == "healthy":
+            base_premium = 1600
+            base_oop = 1800
+        elif health_status == "chronic":
+            base_premium = 1920
+            base_oop = 2160
+        elif health_status == "high_risk":
+            base_premium = 2400
+            base_oop = 2700
 
     print(f"DEBUG: Base Premium: {base_premium}, Base OOP: {base_oop}")
 

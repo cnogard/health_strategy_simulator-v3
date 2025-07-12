@@ -69,6 +69,30 @@ def get_insurance_costs_over_time(profile, years):
     health_status = profile.get("health_status", "healthy")
     age = profile.get("age", 30)
 
+    # Injected base cost logic per profile
+    if family_status == "single":
+        if health_status == "healthy":
+            base_premium = 1600
+            base_oop = 1800
+        elif health_status == "chronic":
+            base_premium = 1920
+            base_oop = 2160
+        elif health_status == "high_risk":
+            base_premium = 2400
+            base_oop = 2700
+    elif family_status == "family":
+        if health_status == "healthy":
+            base_premium = 3200
+            base_oop = 3600
+        elif health_status == "chronic":
+            base_premium = 3840
+            base_oop = 4320
+        elif health_status == "high_risk":
+            base_premium = 4800
+            base_oop = 5400
+
+    print(f"DEBUG: Base Premium: {base_premium}, Base OOP: {base_oop}")
+
     national_premiums = {
         "esi": {"single": 1401, "family": 6575},
         "aca": {"single": 5472, "family": 11738},
@@ -98,8 +122,8 @@ def get_insurance_costs_over_time(profile, years):
             premium = 0
             oop = uninsured_oop.get(family_status, 6500)
         else:
-            base_premium = national_premiums.get(insurance_type_key, {}).get(family_status, 0)
-            base_oop = national_oop.get(insurance_type_key, {}).get(family_status, 0)
+            # base_premium = national_premiums.get(insurance_type_key, {}).get(family_status, 0)
+            # base_oop = national_oop.get(insurance_type_key, {}).get(family_status, 0)
 
             # Apply age and risk correction (using get_oop_correction_ratio)
             age_factor = 1 + 0.03 * max(current_age - 30, 0)

@@ -31,9 +31,10 @@ def run_step_2(tab3):
                 premium_first_year = 0  # Fallback if data is missing
 
             st.markdown("### 💵 Income & Tax Estimation")
-            monthly_income = st.number_input("Monthly Gross Income ($)", min_value=0, value=5000)
-            est_tax_rate = st.number_input("Tax Rate (%)", min_value=0.0, max_value=100.0, value=25.0)
-            income_growth = st.number_input("Expected Income Growth Rate (%)", min_value=0.0, max_value=20.0, value=2.0)
+            # User's income block, styled like partner's block
+            monthly_income = st.number_input("User's Monthly Gross Income ($)", min_value=0, value=5000)
+            est_tax_rate = st.number_input("User's Tax Rate (%)", min_value=0.0, max_value=100.0, value=25.0)
+            income_growth = st.number_input("User's Expected Income Growth Rate (%)", min_value=0.0, max_value=20.0, value=2.0)
 
             # --- Partner income/tax/growth fields (re-inserted) ---
             if family_status == "family":
@@ -381,10 +382,15 @@ def run_step_2(tab3):
                 # total_net_income is already user_net_income + partner_net_income
                 # Joint savings (user input is assumed joint regardless of family status)
                 monthly_savings = annual_contrib / 12
-                # Total monthly expenses
-                total_expenses = monthly_premium + monthly_oop + monthly_household + monthly_debt + monthly_savings
-                # Available cash after all expenses
-                available_cash = total_net_income - total_expenses
+                # Calculate available cash after all deductions using correct formula
+                available_cash = (
+                    total_net_income
+                    - monthly_premium
+                    - monthly_oop
+                    - monthly_household
+                    - monthly_debt
+                    - monthly_savings
+                )
                 # Debug output for troubleshooting
                 st.write("DEBUG: Family Status:", family_status)
                 st.write("DEBUG: Net Income (User):", net_income_monthly_user)
@@ -395,8 +401,8 @@ def run_step_2(tab3):
                 st.write("DEBUG: Household Expenses:", monthly_household)
                 st.write("DEBUG: Monthly Debt:", monthly_debt)
                 st.write("DEBUG: Monthly Savings:", monthly_savings)
-                # Display available cash using markdown as specified
-                st.markdown(f"💰 **Estimated Available Cash (Post Premium + OOP):** ${available_cash:,.2f}/month")
+                # Display available cash using st.success with formatting and emoji
+                st.success(f"💰 Estimated Available Cash (Post Premium + OOP): ${available_cash:,.0f}/month")
 
                 # Calculate available cash projection year-over-year with premium and OOP escalation
                 available_cash_projection = []

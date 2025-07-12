@@ -1,6 +1,13 @@
 import pandas as pd
 
-def get_insurance_costs(insurance_type: str, health_status: str, family_status: str, years: int = 60) -> tuple:
+def get_insurance_costs(
+    insurance_type: str,
+    health_status: str,
+    family_status: str,
+    user_age: int = None,
+    partner_age: int = None,
+    years_to_simulate: int = 60
+) -> tuple:
     """
     Returns annual premium and out-of-pocket (OOP) costs over time based on insurance type, health and family status.
 
@@ -21,8 +28,8 @@ def get_insurance_costs(insurance_type: str, health_status: str, family_status: 
             "chronic": 459000,
             "high_risk": 472000,
         }
-        annual_oop = lifetime_oop_map.get(health_status, 75000) / years
-        return [0] * years, [annual_oop] * years
+        annual_oop = lifetime_oop_map.get(health_status, 75000) / years_to_simulate
+        return [0] * years_to_simulate, [annual_oop] * years_to_simulate
 
     premium_lookup = {
         "healthy": {"single": 1600, "family": 3200},
@@ -37,18 +44,18 @@ def get_insurance_costs(insurance_type: str, health_status: str, family_status: 
     }
 
     if health_status == "chronic":
-        chronic_years = years  # chronic persists for life
+        chronic_years = years_to_simulate  # chronic persists for life
         premium = [premium_lookup["chronic"][family_status]] * chronic_years
         oop = [oop_lookup["chronic"][family_status]] * chronic_years
     elif health_status == "high_risk":
-        high_risk_years = min(10, years)
-        remaining_years = years - high_risk_years
+        high_risk_years = min(10, years_to_simulate)
+        remaining_years = years_to_simulate - high_risk_years
         premium = [premium_lookup["high_risk"][family_status]] * high_risk_years
         premium += [premium_lookup["chronic"][family_status]] * remaining_years
         oop = [oop_lookup["high_risk"][family_status]] * high_risk_years
         oop += [oop_lookup["chronic"][family_status]] * remaining_years
     else:  # healthy
-        premium = [premium_lookup["healthy"][family_status]] * years
-        oop = [oop_lookup["healthy"][family_status]] * years
+        premium = [premium_lookup["healthy"][family_status]] * years_to_simulate
+        oop = [oop_lookup["healthy"][family_status]] * years_to_simulate
 
     return premium, oop

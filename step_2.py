@@ -4,6 +4,9 @@ import streamlit as st
 
 def run_step_2(tab3):
     with tab3:
+        # --- Ensure family_status is initialized in session_state to avoid AttributeError ---
+        if "family_status" not in st.session_state:
+            st.session_state.family_status = "single"
        # --- Use premium inflation from Step 1 as selected by the user ---
         inflation_rate = st.session_state.get("premium_inflation", 0.05)
         # --- Ensure profile and key variables are always defined to avoid reference errors ---

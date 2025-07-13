@@ -299,18 +299,30 @@ def run_step_1(tab1):
                     employer_premiums = [0] * n_years
                     total_oop_over_time = oop_years
                 elif insurance_type_key == "Uninsured":
-                    base_full_costs = {
-                        'healthy': 5000,
-                        'chronic': 10000,
-                        'high_risk': 15000
-                    }
-                    base_full_cost = base_full_costs.get(health_status, 8000)
-                    total_oop_over_time = [
-                        estimate_uninsured_oop_by_year(health_status, year + 1, base_full_cost)
-                        for year in range(n_years)
-                    ]
-                    premiums = [0] * n_years
-                    employer_premiums = [0] * n_years
+                    # Uninsured logic using validated lifetime cost estimates divided over expected years
+                    if health_status == "healthy":
+                        lifetime_cost = 75000
+                    elif health_status == "chronic":
+                        lifetime_cost = 459000
+                    else:  # high_risk or other
+                        lifetime_cost = 472000
+
+                    # Estimate number of years until age 85
+                    years = 85 - user_age
+                    avg_annual_cost = lifetime_cost / years if years > 0 else lifetime_cost
+
+                    premiums = [0.0] * years
+                    oop_costs = [avg_annual_cost] * years
+                    # For the cost_df, align years to n_years (simulation range)
+                    # If n_years is less than years, slice; if more, pad
+                    if n_years <= years:
+                        total_oop_over_time = oop_costs[:n_years]
+                        premiums = premiums[:n_years]
+                        employer_premiums = [0.0] * n_years
+                    else:
+                        total_oop_over_time = oop_costs + [0.0] * (n_years - years)
+                        premiums = premiums + [0.0] * (n_years - years)
+                        employer_premiums = [0.0] * n_years
                 else:
                     # fallback
                     premiums = [0] * n_years

@@ -451,10 +451,7 @@ def run_step_1(tab1):
                 print("OOP for Graph:", oop_costs[:5])
                 return premiums[:years_to_simulate], oop_costs[:years_to_simulate]
 
-            premiums, oop_costs = get_premiums_and_oop_for_graph(
-                insurance_type, health_status, family_status, user_age, years_to_simulate
-            )
-            years_plot = list(range(user_age, user_age + len(premiums)))
+
 
             # Only show one insurance cost graph (the correct one)
             if len(premiums) == 0 or len(oop_costs) == 0:

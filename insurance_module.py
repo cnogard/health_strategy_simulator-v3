@@ -123,24 +123,48 @@ def get_insurance_costs_over_time(profile, years):
 
         # Duration-based health status logic
         if health_status == "high_risk" and i >= high_risk_duration:
-            # Revert to chronic after high-risk window
             current_health_status = "chronic"
-            current_base_premium = 3840 if family_status == "family" else 1920
-            current_base_oop = 4320 if family_status == "family" else 2160
         else:
             current_health_status = health_status
-            current_base_premium = base_premium
-            current_base_oop = base_oop
 
-        if insurance_type == "Uninsured":
+        age_factor = 1 + 0.03 * max(current_age - 30, 0)
+        risk_factor = get_oop_correction_ratio(current_age, insurance_type, current_health_status)
+
+        if insurance_type_key == "uninsured":
+            # Use fallback lifetime cost logic for uninsured
+            if current_health_status == "healthy":
+                lifetime_cost = 75000
+            elif current_health_status == "chronic":
+                lifetime_cost = 459000
+            else:
+                lifetime_cost = 472000
+            years_remaining = max(1, 85 - current_age)
+            avg_annual_cost = lifetime_cost / years_remaining
             premium = 0
-            oop = uninsured_oop.get(family_status, 6500)
+            oop = avg_annual_cost
+
+        elif insurance_type_key == "esi":
+            base_premium = national_premiums["esi"][family_status]
+            base_oop = national_oop["esi"][family_status]
+            premium = base_premium * age_factor * risk_factor
+            oop = base_oop * age_factor * risk_factor
+
+        elif insurance_type_key == "aca":
+            base_premium = national_premiums["aca"][family_status]
+            base_oop = national_oop["aca"][family_status]
+            premium = base_premium * age_factor * risk_factor
+            oop = base_oop * age_factor * risk_factor
+
+        elif insurance_type_key in ["medicare_advantage", "traditional_medicare"]:
+            base_premium = national_premiums[insurance_type_key][family_status]
+            base_oop = national_oop[insurance_type_key][family_status]
+            premium = base_premium * age_factor * risk_factor
+            oop = base_oop * age_factor * risk_factor
+
         else:
-            # Apply age and risk correction (using get_oop_correction_ratio)
-            age_factor = 1 + 0.03 * max(current_age - 30, 0)
-            risk_factor = get_oop_correction_ratio(current_age, insurance_type, current_health_status)
-            premium = current_base_premium * age_factor * risk_factor
-            oop = current_base_oop * age_factor * risk_factor
+            # Default fallback logic
+            premium = base_premium * age_factor * risk_factor
+            oop = base_oop * age_factor * risk_factor
 
         premium_list.append(premium)
         oop_list.append(oop)

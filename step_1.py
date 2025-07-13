@@ -398,11 +398,17 @@ def run_step_1(tab1):
                 return
             # Use actual returned values for plotting
             years_plot = list(range(start_age, start_age + len(premiums)))
-            df_costs = pd.DataFrame({
-                "Age": years_plot,
-                "Premiums": premiums,
-                "Out-of-Pocket Costs": oop_costs
-            })
+            min_len = min(len(years_plot), len(premiums), len(oop_costs))
+
+            if min_len == 0:
+                st.warning("Insurance cost data is incomplete or not available for charting.")
+            else:
+                df_costs = pd.DataFrame({
+                    "Age": years_plot[:min_len],
+                    "Premiums": premiums[:min_len],
+                    "Out-of-Pocket Costs": oop_costs[:min_len]
+                })
+                st.line_chart(df_costs.set_index("Age"))
             st.subheader("📊 Estimated Insurance Costs Over Time")
             st.line_chart(df_costs.set_index("Age"))
 

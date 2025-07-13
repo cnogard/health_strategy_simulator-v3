@@ -391,18 +391,58 @@ def run_step_1(tab1):
             # --- Refactored insurance cost visualization logic ---
             # Get insurance costs for graphing (clipped to simulation years)
             years_to_simulate = n_years
-            premiums, oop_costs = get_insurance_costs(
-                insurance_type, health_status, family_status, user_age
+
+            # Insurance cost logic: ensure correct separation for ESI, ACA, and uninsured
+            def get_premiums_and_oop_for_graph(insurance_type, health_status, family_status, user_age, years_to_simulate):
+                print("Insurance Type Selected:", insurance_type)
+                if insurance_type == "Employer-based":
+                    # Use ESI logic
+                    from insurance_cost_model import get_insurance_costs
+                    premiums, oop_costs = get_insurance_costs(
+                        insurance_type="Employer",
+                        health_status=health_status,
+                        family_status=family_status,
+                        user_age=user_age,
+                        partner_age=partner_age if family_status == "family" else None,
+                        years_to_simulate=years_to_simulate
+                    )
+                elif insurance_type == "Marketplace / Self-insured":
+                    # Use ACA/Marketplace logic
+                    from insurance_cost_model import get_insurance_costs
+                    premiums, oop_costs = get_insurance_costs(
+                        insurance_type="Marketplace",
+                        health_status=health_status,
+                        family_status=family_status,
+                        user_age=user_age,
+                        partner_age=partner_age if family_status == "family" else None,
+                        years_to_simulate=years_to_simulate
+                    )
+                elif insurance_type == "None":
+                    # Uninsured logic using validated lifetime cost estimates divided over expected years
+                    if health_status == "healthy":
+                        lifetime_cost = 75000
+                    elif health_status == "chronic":
+                        lifetime_cost = 459000
+                    else:  # high_risk or other
+                        lifetime_cost = 472000
+
+                    # Estimate number of years until age 85
+                    years = 85 - user_age
+                    avg_annual_cost = lifetime_cost / years if years > 0 else lifetime_cost
+
+                    premiums = [0.0] * years
+                    oop_costs = [avg_annual_cost] * years
+                else:
+                    premiums = [0] * years_to_simulate
+                    oop_costs = [0] * years_to_simulate
+                print("Premiums for Graph:", premiums[:5])
+                print("OOP for Graph:", oop_costs[:5])
+                return premiums[:years_to_simulate], oop_costs[:years_to_simulate]
+
+            premiums, oop_costs = get_premiums_and_oop_for_graph(
+                insurance_type, health_status, family_status, user_age, years_to_simulate
             )
-
-            # Ensure lengths match simulation years
-            premiums = premiums[:years_to_simulate]
-            oop_costs = oop_costs[:years_to_simulate]
             years_plot = list(range(user_age, user_age + len(premiums)))
-
-            # Optional debug display for visual confirmation
-            st.text(f"Graph Premiums Preview: {premiums[:5]}")
-            st.text(f"Graph OOP Preview: {oop_costs[:5]}")
 
             # Only show one insurance cost graph (the correct one)
             if len(premiums) == 0 or len(oop_costs) == 0:

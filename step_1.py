@@ -388,18 +388,10 @@ def run_step_1(tab1):
             st.line_chart(cost_df.set_index("Age")["Healthcare Cost"])
             # --- Insurance cost charting section (refactored for fallback and debug) ---
             import pandas as pd
-            # Debug: Print premiums, oop_costs, and years_to_simulate before plotting
-            print("DEBUG: premiums =", premiums)
-            print("DEBUG: oop_costs =", oop_costs)
-            print("DEBUG: years_to_simulate =", years)
-            # Fallback if premiums or oop_costs are empty
-            if not premiums or not oop_costs:
-                st.warning("Insurance cost data is incomplete or not available for charting.")
-                return
-            # Use actual returned values for plotting
+            # Prepare insurance cost chart with clipping logic
             years_plot = list(range(start_age, start_age + len(premiums)))
+            # Clip all cost arrays to the same length
             min_len = min(len(years_plot), len(premiums), len(oop_costs))
-
             if min_len == 0:
                 st.warning("Insurance cost data is incomplete or not available for charting.")
             else:
@@ -408,9 +400,8 @@ def run_step_1(tab1):
                     "Premiums": premiums[:min_len],
                     "Out-of-Pocket Costs": oop_costs[:min_len]
                 })
+                st.subheader("📊 Estimated Insurance Costs Over Time")
                 st.line_chart(df_costs.set_index("Age"))
-            st.subheader("📊 Estimated Insurance Costs Over Time")
-            st.line_chart(df_costs.set_index("Age"))
 
             st.success("Step 1 complete.")
 

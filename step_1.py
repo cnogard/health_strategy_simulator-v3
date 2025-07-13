@@ -386,5 +386,23 @@ def run_step_1(tab1):
                 st.session_state["monthly_premium"] = 0
             # st.write(cost_df[["Age", "Healthcare Cost", "OOP Cost", "Premiums"]])  # Removed debug output
             st.line_chart(cost_df.set_index("Age")["Healthcare Cost"])
+            # --- Visualize insurance costs over time using matplotlib ---
+            import matplotlib.pyplot as plt
+
+            # 🧮 Verify valid data
+            if premiums and oop_costs and len(premiums) == len(oop_costs):
+                st.subheader("📊 Estimated Insurance Costs Over Time")
+                fig, ax = plt.subplots()
+                years = list(range(len(premiums)))
+                ax.plot(years, premiums, label="Premiums", marker="o")
+                ax.plot(years, oop_costs, label="Out-of-Pocket", marker="x")
+                ax.set_xlabel("Years")
+                ax.set_ylabel("Cost ($)")
+                ax.set_title("Insurance Cost Projection")
+                ax.legend()
+                st.pyplot(fig)
+            else:
+                st.warning("Insurance cost data is incomplete or not available for charting.")
+
             st.success("Step 1 complete.")
 

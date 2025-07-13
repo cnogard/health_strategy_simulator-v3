@@ -388,17 +388,30 @@ def run_step_1(tab1):
             st.line_chart(cost_df.set_index("Age")["Healthcare Cost"])
             # --- Insurance cost charting section (refactored for fallback and debug) ---
             import pandas as pd
-            # Prepare insurance cost chart with clipping logic
-            years_plot = list(range(start_age, start_age + len(premiums)))
-            # Clip all cost arrays to the same length
-            min_len = min(len(years_plot), len(premiums), len(oop_costs))
-            if min_len == 0:
+            # --- Refactored insurance cost visualization logic ---
+            # Get insurance costs for graphing (clipped to simulation years)
+            years_to_simulate = n_years
+            premiums, oop_costs = get_insurance_costs(
+                insurance_type, health_status, family_status, user_age
+            )
+
+            # Ensure lengths match simulation years
+            premiums = premiums[:years_to_simulate]
+            oop_costs = oop_costs[:years_to_simulate]
+            years_plot = list(range(user_age, user_age + len(premiums)))
+
+            # Optional debug display for visual confirmation
+            st.text(f"Graph Premiums Preview: {premiums[:5]}")
+            st.text(f"Graph OOP Preview: {oop_costs[:5]}")
+
+            # Only show one insurance cost graph (the correct one)
+            if len(premiums) == 0 or len(oop_costs) == 0:
                 st.warning("Insurance cost data is incomplete or not available for charting.")
             else:
                 df_costs = pd.DataFrame({
-                    "Age": years_plot[:min_len],
-                    "Premiums": premiums[:min_len],
-                    "Out-of-Pocket Costs": oop_costs[:min_len]
+                    "Age": years_plot,
+                    "Premiums": premiums,
+                    "Out-of-Pocket Costs": oop_costs
                 })
                 st.subheader("📊 Estimated Insurance Costs Over Time")
                 st.line_chart(df_costs.set_index("Age"))

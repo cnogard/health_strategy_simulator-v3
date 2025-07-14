@@ -115,6 +115,8 @@ def run_step_2(tab3):
             years = len(cost_df)
             # Save to session state if needed
             st.session_state["monthly_expenses"] = monthly_expenses
+            # Save monthly expenses for available cash calculation in Step 2
+            st.session_state["monthly_expenses_for_cash"] = monthly_expenses
             if monthly_expenses is not None:
                 monthly_household = monthly_expenses  # Use actual input for year 1
                 household_proj = [monthly_expenses * ((1 + inflation_rate) ** i) * 12 for i in range(years)]  # For future years
@@ -134,8 +136,11 @@ def run_step_2(tab3):
             # --- Retrieve projection length ---
             st.session_state["years"] = years
 
+            # --- Use saved monthly expenses for future projection calculations
+            monthly_expenses = st.session_state.get("monthly_expenses_for_cash", 0)
             # --- Project household expenses and debt over time ---
-            # household_proj already defined above with correct formula
+            household_expenses_annual = monthly_expenses * 12
+            household_proj = [household_expenses_annual * ((1 + inflation_rate) ** i) for i in range(years)]
             debt_proj = [debt_monthly_payment * 12 for _ in range(years)]  # constant assumption
 
             # --- Projected Health Premiums ---
@@ -400,7 +405,7 @@ def run_step_2(tab3):
                 monthly_household = household_proj[0] / 12
                 monthly_debt = debt_proj[0] / 12
                 monthly_savings = annual_contrib / 12
-                # Use corrected available cash calculation
+                # Use corrected available cash calculation and ensure monthly_household from projection
                 total_net_income = user_net_income + (net_income_annual_partner if family_status == "family" else 0)
                 available_cash = total_net_income / 12 - monthly_premium - monthly_oop - monthly_household - monthly_debt - monthly_savings
 

@@ -430,16 +430,7 @@ def run_step_2(tab3):
                     cash = total_net_income_proj - total_expenses_proj
                     available_cash_projection.append(max(0, cash))
 
-                    # Debug output for troubleshooting
-                    st.write("DEBUG: Family Status:", family_status)
-                    st.write("DEBUG: Net Income (User):", net_income_monthly_user)
-                    st.write("DEBUG: Net Income (Partner):", net_income_monthly_partner)
-                    st.write("DEBUG: Total Net Income:", total_net_income)
-                    st.write("DEBUG: Monthly Premium:", monthly_premium)
-                    st.write("DEBUG: Monthly OOP:", monthly_oop)
-                    st.write("DEBUG: Household Expenses:", monthly_household)
-                    st.write("DEBUG: Monthly Debt:", monthly_debt)
-                    st.write("DEBUG: Monthly Savings:", monthly_savings)
+
 
                 st.session_state["available_cash_projection"] = available_cash_projection
                 # For backward compatibility, set available_cash as year 1 (first year) value
@@ -452,6 +443,17 @@ def run_step_2(tab3):
                 st.session_state.step2_submitted = True
                 st.session_state.step3_submitted = False
                 st.write("Debug: Step 2 completed.")
+
+                # Debug output for troubleshooting
+                st.write("DEBUG: Family Status:", family_status)
+                st.write("DEBUG: Net Income (User):", net_income_monthly_user)
+                st.write("DEBUG: Net Income (Partner):", net_income_monthly_partner)
+                st.write("DEBUG: Total Net Income:", total_net_income)
+                st.write("DEBUG: Monthly Premium:", monthly_premium)
+                st.write("DEBUG: Monthly OOP:", monthly_oop)
+                st.write("DEBUG: Household Expenses:", monthly_household)
+                st.write("DEBUG: Monthly Debt:", monthly_debt)
+                st.write("DEBUG: Monthly Savings:", monthly_savings)
 
         if "available_cash" in st.session_state:
             rounded_cash = round(st.session_state.available_cash, 2)

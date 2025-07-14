@@ -387,6 +387,10 @@ def run_step_2(tab3):
                     premium_cost = premium_first_year
                 # OOP escalation (first year only)
                 oop_cost = oop_first_year
+                # Recalculate household_proj based on user inputs (first-year only context)
+                household_expenses = st.session_state.get("monthly_expenses", None)
+                if household_expenses is not None:
+                    household_proj = [household_expenses * ((1 + inflation_rate) ** i) for i in range(years)]
                 # Calculate monthly values for clarity (first year only)
                 monthly_premium = premium_cost / 12
                 monthly_oop = oop_cost / 12
@@ -402,6 +406,9 @@ def run_step_2(tab3):
                 if available_cash < 0:
                     st.error("⚠️ You do not have enough available cash to meet your current expenses. Please review your income, expenses, or savings strategy.")
 
+                # Reset household_proj to avoid stale or residual values from earlier block
+                if household_expenses is not None:
+                    household_proj = [household_expenses * ((1 + inflation_rate) ** i) for i in range(years)]
                 # Calculate available cash projection year-over-year with premium and OOP escalation
                 available_cash_projection = []
                 for i in range(years):

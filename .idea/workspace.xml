@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e4e88ba1-64a1-4cdc-85c1-b00bc4c9bab6" name="Changes" comment="import streamlit as st&#10;import os&#10;&#10;st.title(&quot;Capital Care 360 Simulator&quot;)&#10;&#10;tab_simulator, tab_faq = st.tabs([&quot;Simulator&quot;, &quot;FAQ&quot;])&#10;&#10;with tab_simulator:&#10;    st.write(&quot;Simulator content goes here...&quot;)&#10;&#10;with tab_faq:&#10;    st.subheader(&quot;📘 Capital Care 360 FAQ&quot;)&#10;    st.markdown(&quot;Here are the most frequently asked questions about the simulator and how it works.&quot;)&#10;&#10;    faq_path = &quot;FAQ.md&quot;&#10;    if os.path.exists(faq_path):&#10;        with open(faq_path, &quot;r&quot;) as f:&#10;            st.markdown(f.read())&#10;    else:&#10;        st.warning(&quot;FAQ file not found.&quot;)" />
+    <list default="true" id="e4e88ba1-64a1-4cdc-85c1-b00bc4c9bab6" name="Changes" comment="import streamlit as st&#10;import os&#10;&#10;st.title(&quot;Capital Care 360 Simulator&quot;)&#10;&#10;tab_simulator, tab_faq = st.tabs([&quot;Simulator&quot;, &quot;FAQ&quot;])&#10;&#10;with tab_simulator:&#10;    st.write(&quot;Simulator content goes here...&quot;)&#10;&#10;with tab_faq:&#10;    st.subheader(&quot;📘 Capital Care 360 FAQ&quot;)&#10;    st.markdown(&quot;Here are the most frequently asked questions about the simulator and how it works.&quot;)&#10;&#10;    faq_path = &quot;FAQ.md&quot;&#10;    if os.path.exists(faq_path):&#10;        with open(faq_path, &quot;r&quot;) as f:&#10;            st.markdown(f.read())&#10;    else:&#10;        st.warning(&quot;FAQ file not found.&quot;)">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -102,14 +104,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1750528831960</updated>
-    </task>
-    <task id="LOCAL-00017" summary="import streamlit as st&#10;import os&#10;&#10;st.title(&quot;Capital Care 360 Simulator&quot;)&#10;&#10;tab_simulator, tab_faq = st.tabs([&quot;Simulator&quot;, &quot;FAQ&quot;])&#10;&#10;with tab_simulator:&#10;    st.write(&quot;Simulator content goes here...&quot;)&#10;&#10;with tab_faq:&#10;    st.subheader(&quot;📘 Capital Care 360 FAQ&quot;)&#10;    st.markdown(&quot;Here are the most frequently asked questions about the simulator and how it works.&quot;)&#10;&#10;    faq_path = &quot;FAQ.md&quot;&#10;    if os.path.exists(faq_path):&#10;        with open(faq_path, &quot;r&quot;) as f:&#10;            st.markdown(f.read())&#10;    else:&#10;        st.warning(&quot;FAQ file not found.&quot;)">
-      <option name="closed" value="true" />
-      <created>1752202490853</created>
-      <option name="number" value="00017" />
-      <option name="presentableId" value="LOCAL-00017" />
-      <option name="project" value="LOCAL" />
-      <updated>1752202490853</updated>
     </task>
     <task id="LOCAL-00018" summary="import streamlit as st&#10;import os&#10;&#10;st.title(&quot;Capital Care 360 Simulator&quot;)&#10;&#10;tab_simulator, tab_faq = st.tabs([&quot;Simulator&quot;, &quot;FAQ&quot;])&#10;&#10;with tab_simulator:&#10;    st.write(&quot;Simulator content goes here...&quot;)&#10;&#10;with tab_faq:&#10;    st.subheader(&quot;📘 Capital Care 360 FAQ&quot;)&#10;    st.markdown(&quot;Here are the most frequently asked questions about the simulator and how it works.&quot;)&#10;&#10;    faq_path = &quot;FAQ.md&quot;&#10;    if os.path.exists(faq_path):&#10;        with open(faq_path, &quot;r&quot;) as f:&#10;            st.markdown(f.read())&#10;    else:&#10;        st.warning(&quot;FAQ file not found.&quot;)">
       <option name="closed" value="true" />
@@ -495,7 +489,15 @@
       <option name="project" value="LOCAL" />
       <updated>1752461032587</updated>
     </task>
-    <option name="localTasksCounter" value="66" />
+    <task id="LOCAL-00066" summary="import streamlit as st&#10;import os&#10;&#10;st.title(&quot;Capital Care 360 Simulator&quot;)&#10;&#10;tab_simulator, tab_faq = st.tabs([&quot;Simulator&quot;, &quot;FAQ&quot;])&#10;&#10;with tab_simulator:&#10;    st.write(&quot;Simulator content goes here...&quot;)&#10;&#10;with tab_faq:&#10;    st.subheader(&quot;📘 Capital Care 360 FAQ&quot;)&#10;    st.markdown(&quot;Here are the most frequently asked questions about the simulator and how it works.&quot;)&#10;&#10;    faq_path = &quot;FAQ.md&quot;&#10;    if os.path.exists(faq_path):&#10;        with open(faq_path, &quot;r&quot;) as f:&#10;            st.markdown(f.read())&#10;    else:&#10;        st.warning(&quot;FAQ file not found.&quot;)">
+      <option name="closed" value="true" />
+      <created>1752461225654</created>
+      <option name="number" value="00066" />
+      <option name="presentableId" value="LOCAL-00066" />
+      <option name="project" value="LOCAL" />
+      <updated>1752461225654</updated>
+    </task>
+    <option name="localTasksCounter" value="67" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

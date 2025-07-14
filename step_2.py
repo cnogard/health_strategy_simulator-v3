@@ -396,16 +396,7 @@ def run_step_2(tab3):
                 # Use corrected available cash calculation
                 total_net_income = user_net_income + (net_income_annual_partner if family_status == "family" else 0)
                 available_cash = total_net_income / 12 - monthly_premium - monthly_oop - monthly_household - monthly_debt - monthly_savings
-                # Debug output for troubleshooting
-                st.write("DEBUG: Family Status:", family_status)
-                st.write("DEBUG: Net Income (User):", net_income_monthly_user)
-                st.write("DEBUG: Net Income (Partner):", net_income_monthly_partner)
-                st.write("DEBUG: Total Net Income:", total_net_income)
-                st.write("DEBUG: Monthly Premium:", monthly_premium)
-                st.write("DEBUG: Monthly OOP:", monthly_oop)
-                st.write("DEBUG: Household Expenses:", monthly_household)
-                st.write("DEBUG: Monthly Debt:", monthly_debt)
-                st.write("DEBUG: Monthly Savings:", monthly_savings)
+
                 # Display available cash using st.success with formatting and emoji
                 st.success(f"💰 Estimated Available Cash (Post Premium + OOP): ${available_cash:,.0f}/month")
                 if available_cash < 0:
@@ -438,6 +429,18 @@ def run_step_2(tab3):
                     total_expenses_proj = monthly_premium + monthly_oop + monthly_household + monthly_debt + monthly_savings
                     cash = total_net_income_proj - total_expenses_proj
                     available_cash_projection.append(max(0, cash))
+
+                    # Debug output for troubleshooting
+                    st.write("DEBUG: Family Status:", family_status)
+                    st.write("DEBUG: Net Income (User):", net_income_monthly_user)
+                    st.write("DEBUG: Net Income (Partner):", net_income_monthly_partner)
+                    st.write("DEBUG: Total Net Income:", total_net_income)
+                    st.write("DEBUG: Monthly Premium:", monthly_premium)
+                    st.write("DEBUG: Monthly OOP:", monthly_oop)
+                    st.write("DEBUG: Household Expenses:", monthly_household)
+                    st.write("DEBUG: Monthly Debt:", monthly_debt)
+                    st.write("DEBUG: Monthly Savings:", monthly_savings)
+
                 st.session_state["available_cash_projection"] = available_cash_projection
                 # For backward compatibility, set available_cash as year 1 (first year) value
                 st.session_state.available_cash = available_cash_projection[0]

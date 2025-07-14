@@ -113,18 +113,15 @@ def run_step_2(tab3):
             ])
 
             years = len(cost_df)
-            monthly_expenses = st.session_state.get("monthly_expenses", None)
+            # Save to session state if needed
+            st.session_state["monthly_expenses"] = monthly_expenses
             if monthly_expenses is not None:
                 household_expenses_annual = monthly_expenses * 12
                 household_proj = [household_expenses_annual * ((1 + inflation_rate) ** i) for i in range(years)]
 
             st.write("Itemized Total Household Expenses:", monthly_expenses)
-            # Ensure monthly_expenses is not None before display
-            monthly_expenses = st.session_state.get("monthly_expenses", 0)
             st.markdown(f"#### 💰 Total Monthly Household Expenses: ${monthly_expenses:,.0f}")
             st.markdown(f"**Total Monthly Household Expenses:** ${monthly_expenses:,}")
-            # Save to session state if needed
-            st.session_state["monthly_expenses"] = monthly_expenses
 
             # --- 💳 Debt Payments ---
             st.markdown("### 💳 Monthly Debt Payments")

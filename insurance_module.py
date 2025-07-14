@@ -68,27 +68,6 @@ def get_insurance_costs_over_time(profile, years):
     health_status = profile.get("health_status", "healthy")
     age = profile.get("age", 30)
 
-    # Injected base cost logic per profile using approved structure
-    if family_status == "family":
-        if health_status == "healthy":
-            base_premium = 3200
-            base_oop = 3600
-        elif health_status == "chronic":
-            base_premium = 3840
-            base_oop = 4320
-        elif health_status == "high_risk":
-            base_premium = 4800
-            base_oop = 5400
-    else:  # single
-        if health_status == "healthy":
-            base_premium = 1600
-            base_oop = 1800
-        elif health_status == "chronic":
-            base_premium = 1920
-            base_oop = 2160
-        elif health_status == "high_risk":
-            base_premium = 2400
-            base_oop = 2700
 
     # Duration logic for chronic and high-risk
     chronic_duration = years  # Chronic conditions persist through life

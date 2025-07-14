@@ -106,23 +106,21 @@ def run_step_2(tab3):
             childcare_exp = st.number_input("Monthly Childcare / School ($)", min_value=0, value=500)
             other_exp = st.number_input("Other Monthly Expenses ($)", min_value=0, value=440)
 
-            itemized_total = sum([
+            monthly_expenses = sum([
                 housing_exp, transport_exp, food_exp,
                 insurance_exp, entertainment_exp,
                 childcare_exp, other_exp
             ])
 
-            household_expenses_annual = itemized_total * 12
+            household_expenses_annual = monthly_expenses * 12
             years = len(cost_df)
             household_proj = [household_expenses_annual * ((1 + inflation_rate) ** i) for i in range(years)]
 
-            st.write("Itemized Total Household Expenses:", itemized_total)
-            st.markdown(f"#### 💰 Total Monthly Household Expenses: ${itemized_total:,.0f}")
-            st.markdown(f"**Total Monthly Household Expenses:** ${itemized_total:,}")
-            monthly_expenses = itemized_total
+            st.write("Itemized Total Household Expenses:", monthly_expenses)
+            st.markdown(f"#### 💰 Total Monthly Household Expenses: ${monthly_expenses:,.0f}")
+            st.markdown(f"**Total Monthly Household Expenses:** ${monthly_expenses:,}")
             # Save to session state if needed
             st.session_state["monthly_expenses"] = monthly_expenses
-            st.session_state["itemized_total"] = itemized_total
 
             # --- 💳 Debt Payments ---
             st.markdown("### 💳 Monthly Debt Payments")

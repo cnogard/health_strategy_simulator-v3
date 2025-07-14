@@ -116,8 +116,8 @@ def run_step_2(tab3):
             # Save to session state if needed
             st.session_state["monthly_expenses"] = monthly_expenses
             if monthly_expenses is not None:
-                household_expenses_annual = monthly_expenses * 12
-                household_proj = [household_expenses_annual * ((1 + inflation_rate) ** i) for i in range(years)]
+                monthly_household = monthly_expenses  # Use actual input for year 1
+                household_proj = [monthly_expenses * ((1 + inflation_rate) ** i) * 12 for i in range(years)]  # For future years
 
             st.write("Itemized Total Household Expenses:", monthly_expenses)
             st.markdown(f"#### 💰 Total Monthly Household Expenses: ${monthly_expenses:,.0f}")

@@ -111,6 +111,12 @@ def run_step_2(tab3):
                 insurance_exp, entertainment_exp,
                 childcare_exp, other_exp
             ])
+
+            household_expenses_annual = itemized_total * 12
+            # Move years definition above its first use in comprehensions
+            years = len(cost_df)
+            household_proj = [household_expenses_annual * ((1 + inflation_rate) ** i) for i in range(years)]
+
             st.write("Itemized Total Household Expenses:", itemized_total)
             st.markdown(f"#### 💰 Total Monthly Household Expenses: ${itemized_total:,.0f}")
             st.markdown(f"**Total Monthly Household Expenses:** ${itemized_total:,}")
@@ -128,7 +134,6 @@ def run_step_2(tab3):
             inflation = st.session_state.get("inflation_rate", 0.03)
 
             # --- Retrieve projection length ---
-            years = len(cost_df)
             st.session_state["years"] = years
 
             # --- Project household expenses and debt over time ---

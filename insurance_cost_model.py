@@ -9,7 +9,7 @@ def get_insurance_costs(
     years_to_simulate: int = 60
 ) -> tuple:
     """
-    Returns annual premium and out-of-pocket (OOP) costs over time based on insurance type, health and family status.
+    Returns annual premiums and out-of-pocket (OOP) costs over time based on insurance type, health, and family status.
 
     Parameters:
     - insurance_type: "uninsured" or other recognized insurance types
@@ -31,17 +31,39 @@ def get_insurance_costs(
         annual_oop = lifetime_oop_map.get(health_status, 75000) / years_to_simulate
         return [0] * years_to_simulate, [annual_oop] * years_to_simulate
 
-    premium_lookup = {
-        "healthy": {"single": 1600, "family": 3200},
-        "chronic": {"single": 1920, "family": 3840},
-        "high_risk": {"single": 2400, "family": 4800},
+    # Define cost mappings for ESI and ACA separately
+    cost_structure = {
+        "Employer": {
+            "premium": {
+                "healthy": {"single": 1541, "family": 3082},
+                "chronic": {"single": 1920, "family": 3840},
+                "high_risk": {"single": 2400, "family": 4800},
+            },
+            "oop": {
+                "healthy": {"single": 2200, "family": 4400},
+                "chronic": {"single": 2600, "family": 5200},
+                "high_risk": {"single": 3100, "family": 6200},
+            }
+        },
+        "Marketplace": {
+            "premium": {
+                "healthy": {"single": 5100, "family": 10200},
+                "chronic": {"single": 5800, "family": 11600},
+                "high_risk": {"single": 6800, "family": 13600},
+            },
+            "oop": {
+                "healthy": {"single": 4500, "family": 9000},
+                "chronic": {"single": 5200, "family": 10400},
+                "high_risk": {"single": 6500, "family": 13000},
+            }
+        }
     }
 
-    oop_lookup = {
-        "healthy": {"single": 1800, "family": 3600},
-        "chronic": {"single": 2160, "family": 4320},
-        "high_risk": {"single": 2700, "family": 5400},
-    }
+    # Fallback to Employer if not specified
+    insurance_key = "Employer" if insurance_type.lower() == "employer" else "Marketplace"
+
+    premium_lookup = cost_structure[insurance_key]["premium"]
+    oop_lookup = cost_structure[insurance_key]["oop"]
 
     if health_status == "chronic":
         chronic_years = years_to_simulate  # chronic persists for life

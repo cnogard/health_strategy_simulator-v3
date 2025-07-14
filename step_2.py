@@ -113,7 +113,6 @@ def run_step_2(tab3):
             ])
 
             household_expenses_annual = itemized_total * 12
-            # Move years definition above its first use in comprehensions
             years = len(cost_df)
             household_proj = [household_expenses_annual * ((1 + inflation_rate) ** i) for i in range(years)]
 
@@ -137,7 +136,7 @@ def run_step_2(tab3):
             st.session_state["years"] = years
 
             # --- Project household expenses and debt over time ---
-            household_proj = [monthly_expenses * 12 * ((1 + inflation) ** i) for i in range(years)]
+            # household_proj already defined above with correct formula
             debt_proj = [debt_monthly_payment * 12 for _ in range(years)]  # constant assumption
 
             # --- Projected Health Premiums ---

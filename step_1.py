@@ -418,6 +418,15 @@ def run_step_1(tab1):
                         partner_age=partner_age if family_status == "family" else None,
                         years_to_simulate=years_to_simulate
                     )
+                    premium_cost = premiums[0]
+                    oop_cost = oop_costs[0]
+                    monthly_premium = premium_cost / 12
+                    monthly_oop = oop_cost / 12
+                    # Save to session state for use in Step 2
+                    st.session_state["premium_cost"] = premium_cost
+                    st.session_state["oop_cost"] = oop_cost
+                    st.session_state["monthly_premium"] = monthly_premium
+                    st.session_state["monthly_oop"] = monthly_oop
                 elif insurance_type == "Marketplace / Self-insured":
                     # Use ACA/Marketplace logic
                     from insurance_cost_model import get_insurance_costs
@@ -429,6 +438,15 @@ def run_step_1(tab1):
                         partner_age=partner_age if family_status == "family" else None,
                         years_to_simulate=years_to_simulate
                     )
+                    premium_cost = premiums[0]
+                    oop_cost = oop_costs[0]
+                    monthly_premium = premium_cost / 12
+                    monthly_oop = oop_cost / 12
+                    # Save to session state for use in Step 2
+                    st.session_state["premium_cost"] = premium_cost
+                    st.session_state["oop_cost"] = oop_cost
+                    st.session_state["monthly_premium"] = monthly_premium
+                    st.session_state["monthly_oop"] = monthly_oop
                 elif insurance_type == "None":
                     # Uninsured logic using validated lifetime cost estimates divided over expected years
                     if health_status == "healthy":
@@ -444,9 +462,27 @@ def run_step_1(tab1):
 
                     premiums = [0.0] * years
                     oop_costs = [avg_annual_cost] * years
+                    premium_cost = premiums[0]
+                    oop_cost = oop_costs[0]
+                    monthly_premium = premium_cost / 12
+                    monthly_oop = oop_cost / 12
+                    # Save to session state for use in Step 2
+                    st.session_state["premium_cost"] = premium_cost
+                    st.session_state["oop_cost"] = oop_cost
+                    st.session_state["monthly_premium"] = monthly_premium
+                    st.session_state["monthly_oop"] = monthly_oop
                 else:
                     premiums = [0] * years_to_simulate
                     oop_costs = [0] * years_to_simulate
+                    premium_cost = premiums[0]
+                    oop_cost = oop_costs[0]
+                    monthly_premium = premium_cost / 12
+                    monthly_oop = oop_cost / 12
+                    # Save to session state for use in Step 2
+                    st.session_state["premium_cost"] = premium_cost
+                    st.session_state["oop_cost"] = oop_cost
+                    st.session_state["monthly_premium"] = monthly_premium
+                    st.session_state["monthly_oop"] = monthly_oop
                 print("Premiums for Graph:", premiums[:5])
                 print("OOP for Graph:", oop_costs[:5])
                 return premiums[:years_to_simulate], oop_costs[:years_to_simulate]
@@ -460,10 +496,14 @@ def run_step_1(tab1):
             if len(premiums) == 0 or len(oop_costs) == 0:
                 st.warning("Insurance cost data is incomplete or not available for charting.")
             else:
+                # --- Apply user's inflation rate dynamically to premiums and oop_costs ---
+                inflation_rate = st.session_state.get("inflation_rate", 0.03)
+                premiums_inflated = [premium * ((1 + inflation_rate) ** i) for i, premium in enumerate(premiums)]
+                oop_costs_inflated = [oop * ((1 + inflation_rate) ** i) for i, oop in enumerate(oop_costs)]
                 df_costs = pd.DataFrame({
                     "Age": years_plot,
-                    "Premiums": premiums,
-                    "Out-of-Pocket Costs": oop_costs
+                    "Premiums": premiums_inflated,
+                    "Out-of-Pocket Costs": oop_costs_inflated
                 })
                 st.subheader("📊 Estimated Insurance Costs Over Time")
                 st.line_chart(df_costs.set_index("Age"))

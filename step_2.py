@@ -410,7 +410,7 @@ def run_step_2(tab3):
                 monthly_savings = annual_contrib / 12
                 # Use corrected available cash calculation and ensure monthly_household from projection
                 total_net_income = user_net_income + (net_income_annual_partner if family_status == "family" else 0)
-                available_cash = total_net_income / 12 - monthly_premium - monthly_oop - monthly_household - monthly_debt - monthly_savings
+                available_cash = total_net_income / 12 - monthly_premium - monthly_oop - household_expenses - monthly_debt - monthly_savings
 
                 # Display available cash using st.success with formatting and emoji
                 st.markdown(f"💰 Estimated Available Cash (Post Premium + OOP): ${available_cash:,.0f}/month")

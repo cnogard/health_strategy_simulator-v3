@@ -117,6 +117,8 @@ def run_step_2(tab3):
             st.session_state["monthly_expenses"] = monthly_expenses
             # Save monthly expenses for available cash calculation in Step 2
             st.session_state["monthly_expenses_for_cash"] = monthly_expenses
+            # Preserve user-entered value for available cash
+            st.session_state["monthly_expenses_input"] = monthly_expenses  # Preserve user-entered value for available cash
             if monthly_expenses is not None:
                 monthly_household = monthly_expenses  # Use actual input for year 1
                 household_proj = [monthly_expenses * ((1 + inflation_rate) ** i) * 12 for i in range(years)]  # For future years
@@ -139,7 +141,7 @@ def run_step_2(tab3):
             # --- Use saved monthly expenses for future projection calculations
             monthly_expenses = st.session_state.get("monthly_expenses_for_cash", 0)
             # --- Project household expenses and debt over time ---
-            household_expenses_annual = monthly_expenses * 12
+            household_expenses_annual = st.session_state.get("monthly_expenses_input", 0) * 12
             household_proj = [household_expenses_annual * ((1 + inflation_rate) ** i) for i in range(years)]
             debt_proj = [debt_monthly_payment * 12 for _ in range(years)]  # constant assumption
 
@@ -400,9 +402,10 @@ def run_step_2(tab3):
                 if household_expenses is not None:
                     household_proj = [household_expenses * ((1 + inflation_rate) ** i) for i in range(years)]
                 # Calculate monthly values for clarity (first year only)
-                monthly_premium = premium_cost / 12
-                monthly_oop = oop_cost / 12
-                monthly_household = household_proj[0] / 12
+                monthly_premium = premium_cost / 12 if premium_cost else 0
+                monthly_oop = oop_cost / 12 if oop_cost else 0
+                # Use the user-entered (year 1) monthly expenses for available cash
+                monthly_household = st.session_state.get("monthly_expenses_input", 0)
                 monthly_debt = debt_proj[0] / 12
                 monthly_savings = annual_contrib / 12
                 # Use corrected available cash calculation and ensure monthly_household from projection
@@ -410,7 +413,8 @@ def run_step_2(tab3):
                 available_cash = total_net_income / 12 - monthly_premium - monthly_oop - monthly_household - monthly_debt - monthly_savings
 
                 # Display available cash using st.success with formatting and emoji
-                st.success(f"💰 Estimated Available Cash (Post Premium + OOP): ${available_cash:,.0f}/month")
+                st.markdown(f"💰 Estimated Available Cash (Post Premium + OOP): ${available_cash:,.0f}/month")
+                print("DEBUG: Household Expenses:", monthly_household)
                 if available_cash < 0:
                     st.error("⚠️ You do not have enough available cash to meet your current expenses. Please review your income, expenses, or savings strategy.")
 
@@ -433,19 +437,21 @@ def run_step_2(tab3):
                     monthly_income_user = income_proj[i] / 12
                     monthly_income_partner = income_proj_partner[i] / 12 if family_status == "family" else 0
                     monthly_income = monthly_income_user + monthly_income_partner
-                    monthly_premium = premium_cost / 12
-                    monthly_oop = oop_cost / 12
-                    monthly_household = household_proj[i] / 12
+                    monthly_premium = premium_cost / 12 if premium_cost else 0
+                    monthly_oop = oop_cost / 12 if oop_cost else 0
+                    # For projection, grow household expenses per inflation, but use user input for year 1
+                    if i == 0:
+                        monthly_household_proj = st.session_state.get("monthly_expenses_input", 0)
+                    else:
+                        monthly_household_proj = household_proj[i] / 12
                     monthly_debt = debt_proj[i] / 12
                     monthly_savings = annual_contrib / 12
 
                     # Use the same joint income/expenses logic as above for projection
                     total_net_income_proj = monthly_income
-                    total_expenses_proj = monthly_premium + monthly_oop + monthly_household + monthly_debt + monthly_savings
+                    total_expenses_proj = monthly_premium + monthly_oop + monthly_household_proj + monthly_debt + monthly_savings
                     cash = total_net_income_proj - total_expenses_proj
                     available_cash_projection.append(max(0, cash))
-
-
 
                 st.session_state["available_cash_projection"] = available_cash_projection
                 # For backward compatibility, set available_cash as year 1 (first year) value

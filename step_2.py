@@ -389,23 +389,22 @@ def run_step_2(tab3):
 
                 # --- NEW: Joint income and expenses computation for available cash ---
                 # Premium escalation logic (first year only for available cash debug)
+                premium_cost = st.session_state.get("premium_cost", 0)
+                oop_cost = st.session_state.get("oop_cost", 0)
+                monthly_premium = premium_cost / 12
+                monthly_oop = oop_cost / 12
                 if insurance_type == "None":
                     premium_cost = 0
                 elif insurance_type == "Employer":
                     premium_cost = employee_premium
                 else:  # Marketplace / Self-insured
                     premium_cost = premium_first_year
-                # OOP escalation (first year only)
                 oop_cost = oop_first_year
-                # Recalculate household_proj based on user inputs (first-year only context)
-                household_expenses = st.session_state.get("monthly_expenses", None)
-                if household_expenses is not None:
-                    household_proj = [household_expenses * ((1 + inflation_rate) ** i) for i in range(years)]
-                # Calculate monthly values for clarity (first year only)
-                monthly_premium = premium_cost / 12 if premium_cost else 0
-                monthly_oop = oop_cost / 12 if oop_cost else 0
+                monthly_premium = premium_cost / 12
+                monthly_oop = oop_cost / 12
                 # Use the user-entered (year 1) monthly expenses for available cash
-                monthly_household = st.session_state.get("monthly_expenses_input", 0)
+                household_expenses = st.session_state.get("monthly_expenses", 0)
+                monthly_household = household_expenses
                 monthly_debt = debt_proj[0] / 12
                 monthly_savings = annual_contrib / 12
                 # Use corrected available cash calculation and ensure monthly_household from projection
@@ -437,11 +436,11 @@ def run_step_2(tab3):
                     monthly_income_user = income_proj[i] / 12
                     monthly_income_partner = income_proj_partner[i] / 12 if family_status == "family" else 0
                     monthly_income = monthly_income_user + monthly_income_partner
-                    monthly_premium = premium_cost / 12 if premium_cost else 0
-                    monthly_oop = oop_cost / 12 if oop_cost else 0
+                    monthly_premium = premium_cost / 12
+                    monthly_oop = oop_cost / 12
                     # For projection, grow household expenses per inflation, but use user input for year 1
                     if i == 0:
-                        monthly_household_proj = st.session_state.get("monthly_expenses_input", 0)
+                        monthly_household_proj = st.session_state.get("monthly_expenses", 0)
                     else:
                         monthly_household_proj = household_proj[i] / 12
                     monthly_debt = debt_proj[i] / 12

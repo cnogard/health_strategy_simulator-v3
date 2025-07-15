@@ -120,6 +120,13 @@ def run_step_1(tab1):
             oop_costs = 75000 / 60 if health_status == "healthy" else \
                         459000 / 60 if health_status == "chronic" else \
                         472000 / 60
+            # Save premium_cost and oop_cost for session state (for uninsured)
+            premium_cost = 0
+            oop_cost = oop_costs
+            st.session_state.premium_cost = premium_cost
+            st.session_state.oop_cost = oop_cost
+            st.session_state.monthly_premium = premium_cost / 12
+            st.session_state.monthly_oop = oop_cost / 12
         elif use_avg_inputs == "Use National Averages (Recommended)":
             # Use national benchmark data for selected insurance type
             insurance_type_key = "Employer" if insurance_type == "Employer-based" else "Marketplace"
@@ -138,10 +145,23 @@ def run_step_1(tab1):
             st.markdown(f"**Premium:** ${int(premiums[0]):,}/yr (employee contribution)")
             st.markdown(f"**Out-of-Pocket (risk-adjusted):** ${int(oop_costs[0]):,}/yr")
             st.markdown(f"**Total Year 1 Cost (estimated):** ${int(premiums[0] + oop_costs[0]):,}")
+            # Save premium_cost and oop_cost for session state (for averages)
+            premium_cost = premiums[0]
+            oop_cost = oop_costs[0]
+            st.session_state.premium_cost = premium_cost
+            st.session_state.oop_cost = oop_cost
+            st.session_state.monthly_premium = premium_cost / 12
+            st.session_state.monthly_oop = oop_cost / 12
         elif use_avg_inputs == "Enter My Own Insurance Costs":
             premiums = st.number_input("Annual Premium Payment (Employee Portion)", min_value=0)
             oop_costs = st.number_input("Estimated Annual Out-of-Pocket Costs", min_value=0)
             insurance_type_key = "Custom"
+            premium_cost = premiums
+            oop_cost = oop_costs
+            st.session_state.premium_cost = premium_cost
+            st.session_state.oop_cost = oop_cost
+            st.session_state.monthly_premium = premium_cost / 12
+            st.session_state.monthly_oop = oop_cost / 12
         # Save for year 1 usage
         if insurance_type == "None":
             st.session_state.premium_year_1 = 0
@@ -396,8 +416,7 @@ def run_step_1(tab1):
             if insurance_type_key == "Uninsured":
                 st.session_state.employee_premium = 0
                 st.session_state["monthly_premium"] = 0
-            # st.write(cost_df[["Age", "Healthcare Cost", "OOP Cost", "Premiums"]])  # Removed debug output
-            st.line_chart(cost_df.set_index("Age")["Healthcare Cost"])
+
             # --- Insurance cost charting section (refactored for fallback and debug) ---
             import pandas as pd
             # --- Refactored insurance cost visualization logic ---
@@ -492,21 +511,22 @@ def run_step_1(tab1):
             )
             years_plot = list(range(user_age, user_age + len(premiums)))
 
-            # Only show one insurance cost graph (the correct one)
-            if len(premiums) == 0 or len(oop_costs) == 0:
-                st.warning("Insurance cost data is incomplete or not available for charting.")
-            else:
-                # --- Apply user's inflation rate dynamically to premiums and oop_costs ---
-                inflation_rate = st.session_state.get("inflation_rate", 0.03)
-                premiums_inflated = [premium * ((1 + inflation_rate) ** i) for i, premium in enumerate(premiums)]
-                oop_costs_inflated = [oop * ((1 + inflation_rate) ** i) for i, oop in enumerate(oop_costs)]
-                df_costs = pd.DataFrame({
-                    "Age": years_plot,
-                    "Premiums": premiums_inflated,
-                    "Out-of-Pocket Costs": oop_costs_inflated
-                })
-                st.subheader("📊 Estimated Insurance Costs Over Time")
-                st.line_chart(df_costs.set_index("Age"))
+            # --- Inflation and Medicare-adjusted total expenses calculation ---
+            inflation_rate = st.session_state.get("expense_inflation", 0.05)
+            total_expenses = []
+            for i, (p, o) in enumerate(zip(premiums, oop_costs)):
+                year_age = user_age + i
+                inflated_total = (p + o) * ((1 + inflation_rate) ** i)
+                if year_age >= 65:
+                    inflated_total *= 0.7  # Apply Medicare cost drop after age 65
+                total_expenses.append(inflated_total)
+            import pandas as pd
+            df_costs = pd.DataFrame({
+                "Age": years_plot,
+                "Total Healthcare Expenses": total_expenses
+            })
+            st.subheader("📊 Estimated Total Healthcare Expenses Over Time")
+            st.line_chart(df_costs.set_index("Age"))
 
             st.success("Step 1 complete.")
 

@@ -22,7 +22,7 @@ def run_step_5(tab6):
         partner_health_status = st.session_state.get("partner_health_status", None)
         family_status = profile.get("family_status", "single")
         savings_balance = st.session_state.get("savings_balance", 0)
-        net_income_monthly = st.session_state.get("net_income_monthly", 0)
+        net_user_income = st.session_state.get("net_user_income", 0)
 
         profile_summary = f"- **👤 Profile**: {health_status}"
         if family_status == "family" and partner_health_status:
@@ -33,7 +33,7 @@ def run_step_5(tab6):
             profile_summary += ", Family History: No"
 
         st.markdown(f"<p style='font-size: 15px;'><strong>👤 Profile:</strong> {profile_summary[17:]}</p>", unsafe_allow_html=True)
-        st.markdown(f"<p style='font-size: 15px;'><strong>💰 Financial Path:</strong> Income: ${net_income_monthly:,.0f}/mo, Savings: ${savings_balance:,.0f}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size: 15px;'><strong>💰 Financial Path:</strong> Income: ${net_user_income:,.0f}/mo, Savings: ${savings_balance:,.0f}</p>", unsafe_allow_html=True)
 
         user_age = st.session_state.get("profile", {}).get("age", 30)
         user_chronic_count = st.session_state.get("user_chronic_count", "None").lower().replace(" ", "_")

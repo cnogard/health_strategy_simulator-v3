@@ -41,7 +41,7 @@ def run_step_6(tab7):
         health_status = profile.get("health_status", "")
         family_history = profile.get("family_history", [])
         insurance_type = profile.get("insurance_type", "")
-        available_income = st.session_state.get("available_cash", 0)
+        available_cash = st.session_state.get("available_cash", 0)
         savings_balance = st.session_state.get("savings_start", 0)
 
         partner_health_status = profile.get("partner_health_status", "")
@@ -150,6 +150,9 @@ def run_step_6(tab7):
         annual_contribution = monthly_contribution * 12
         st.session_state["annual_contribution"] = annual_contribution
         initial_capital = savings_contribution + annual_contribution
+        # --- Add Option 2 savings to initial capital ---
+        option2_savings = st.session_state.get("annual_savings_option2", 0)
+        initial_capital += option2_savings
 
         st.session_state["capital_fund_source"] = fund_source
         st.session_state["initial_capital"] = initial_capital
@@ -157,6 +160,9 @@ def run_step_6(tab7):
         # Healthcare savings component
         healthcare_savings = st.session_state.get("capital_healthcare_savings", 0)
         combined_capital = initial_capital + healthcare_savings
+        # (Option 2 savings already included in initial_capital above)
+        # option2_savings = st.session_state.get("annual_savings_option2", 0)
+        # combined_capital += option2_savings
         st.markdown(f"**Projected Capital Care Fund (Year 1): ${combined_capital:,.0f}**")
         st.caption("Note: Projection uses short-term conservative investment growth assumptions. Upgrade for advanced simulation.")
 
@@ -219,13 +225,13 @@ def run_step_6(tab7):
         drawdown_option = ""
 
         if health_status in ["chronic", "high_risk"]:
-            if available_income > 0 and savings_balance > 0:
+            if available_cash > 0 and savings_balance > 0:
                 recommendation_text = "🧱 **Recommendation:** You are at risk and already in a treatment window. Focus on building a **Capital Care Fund** using available savings or income. (Option 1)"
                 drawdown_option = "Option 1"
             elif savings_balance > 0:
                 recommendation_text = "💰 **Recommendation:** Use existing savings to begin a **Capital Care Fund**. (Option 1)"
                 drawdown_option = "Option 1"
-            elif available_income > 0:
+            elif available_cash > 0:
                 recommendation_text = "💡 **Recommendation:** Contribute from income to a **Capital Care Fund** for future treatment needs. (Option 1)"
                 drawdown_option = "Option 1"
             else:
@@ -234,14 +240,14 @@ def run_step_6(tab7):
                 drawdown_option = ""
         else:
             if family_history:
-                if available_income > 0:
+                if available_cash > 0:
                     recommendation_text = "🔁 **Recommendation:** You’re healthy with family risk. Begin **Capital + Insurance Optimization** (**Option 1 + 2**)."
                     drawdown_option = "Option 1 + Option 2"
                 else:
                     recommendation_text = "📉 **Recommendation:** Healthy with family risk. Consider **insurance review** (**Option 2**)."
                     drawdown_option = "Option 2"
             else:
-                if available_income > 0:
+                if available_cash >  0:
                     recommendation_text = "✅ **Recommendation:** Ideal profile for a **Capital Health Fund** (**Option 1 + 2**)."
                     drawdown_option = "Option 1 + Option 2"
                 else:
@@ -295,7 +301,7 @@ def run_step_6(tab7):
                     "oop": st.session_state.get("oop_first_year")
                 },
                 "financials": {
-                    "monthly_income": st.session_state.get("monthly_income"),
+                    "net_user_income": st.session_state.get("net_user_income"),
                     "monthly_expenses": st.session_state.get("monthly_expenses"),
                     "savings_balance": st.session_state.get("savings_balance"),
                     "debt_monthly": st.session_state.get("debt_monthly_payment")

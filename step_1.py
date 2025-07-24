@@ -193,34 +193,65 @@ def run_step_1(tab1):
         st.session_state["expense_inflation"] = premium_inflation
 
         # Restore care preferences if missing
-        st.subheader("Care Preferences")
-        with st.expander("🏥 Select Your Care Preferences", expanded=True):
+        st.subheader("Insurance Coverage")
+        with st.expander("🏥 Select Your Insurance Coverage", expanded=True):
             col1, col2 = st.columns(2)
             with col1:
                 include_primary = st.checkbox("Primary Care", value=True)
                 include_chronic = st.checkbox("Chronic Care", value=True)
-                include_preventive = st.checkbox("Preventive Care", value=True)
                 include_surgical = st.checkbox("Surgical Care", value=True)
                 include_cancer = st.checkbox("Cancer Care", value=True)
+                include_eol = st.checkbox("End-of-Life Care", value=True)
             with col2:
+                include_preventive = st.checkbox("Preventive Care", value=True)
                 include_mental = st.checkbox("Mental Health", value=True)
                 include_emergency = st.checkbox("Emergency Care", value=True)
-                include_eol = st.checkbox("End-of-Life Care", value=True)
                 include_maternity = st.checkbox("Maternity Care", value=True)
                 include_pediatric = st.checkbox("Pediatric Care", value=True)
             care_prefs = {
                 "include_primary": include_primary,
-                "include_chronic": include_chronic,
                 "include_preventive": include_preventive,
+                "include_chronic": include_chronic,
+                "include_mental": include_mental,
                 "include_surgical": include_surgical,
                 "include_cancer": include_cancer,
-                "include_mental": include_mental,
-                "include_emergency": include_emergency,
                 "include_eol": include_eol,
+                "include_emergency": include_emergency,
                 "include_maternity": include_maternity,
                 "include_pediatric": include_pediatric
             }
             st.session_state.care_prefs = care_prefs
+
+        # --- 🧓 Long-Term Care Selection ---
+        st.subheader("🏡 Long-Term Care Options")
+
+        enable_ltc = st.checkbox("Include Long-Term Care in your projections?", value=False)
+
+        if enable_ltc:
+            selected_ltc_type = st.radio(
+                "Choose your preferred long-term care setting:",
+                ["Assisted Living (Private)", "Nursing Home (Semi-Private)", "Nursing Home (Private)"],
+                index=0
+            )
+
+            if selected_ltc_type == "Assisted Living (Private)":
+                ltc_monthly_cost = st.number_input("Monthly Cost for Assisted Living (Private)", min_value=0,
+                                                   value=5900)
+            elif selected_ltc_type == "Nursing Home (Semi-Private)":
+                ltc_monthly_cost = st.number_input("Monthly Cost for Nursing Home (Semi-Private)", min_value=0,
+                                                   value=9277)
+            else:  # "Nursing Home (Private)"
+                ltc_monthly_cost = st.number_input("Monthly Cost for Nursing Home (Private)", min_value=0, value=10646)
+
+            st.session_state["ltc_enabled"] = True
+            st.session_state["ltc_type"] = selected_ltc_type
+            st.session_state["ltc_monthly_cost"] = ltc_monthly_cost
+            st.session_state["ltc_annual_cost"] = ltc_monthly_cost * 12
+        else:
+            st.session_state["ltc_enabled"] = False
+            st.session_state["ltc_type"] = None
+            st.session_state["ltc_monthly_cost"] = 0
+            st.session_state["ltc_annual_cost"] = 0
 
         if st.button("Run Step 1"):
             st.session_state.step1_submitted = True
@@ -242,6 +273,33 @@ def run_step_1(tab1):
             st.session_state["age"] = user_age
             care_prefs = st.session_state.get("care_prefs", {})
             cost_df = generate_costs(profile, care_prefs)
+
+            if st.session_state.get("include_ltc", False):
+                ltc_inputs = st.session_state.get("ltc_inputs", {})
+                average_ltc_monthly = (
+                                              ltc_inputs["assisted_living"] +
+                                              ltc_inputs["nursing_semi"] +
+                                              ltc_inputs["nursing_private"]
+                                      ) / 3
+                average_ltc_annual = average_ltc_monthly * 12
+
+                start_age = profile["age"]
+                inflation = st.session_state.get("expense_inflation", 0.05)
+                longterm_costs = []
+
+                for i in range(len(cost_df)):
+                    age = start_age + i
+                    if age >= 75:
+                        cost = average_ltc_annual * ((1 + inflation) ** i)
+                    else:
+                        cost = 0
+                    longterm_costs.append(cost)
+
+                cost_df["Long-Term Care"] = longterm_costs
+                cost_df["Healthcare Cost"] += cost_df["Long-Term Care"]
+            else:
+                cost_df["Long-Term Care"] = [0] * len(cost_df)
+
             # --- Patch: Ensure Healthcare Cost fallback if needed ---
             if "Capital+OOP" not in cost_df.columns and "Healthcare Cost" not in cost_df.columns:
                 cost_df["Healthcare Cost"] = cost_df.get("Total Healthcare", 0)

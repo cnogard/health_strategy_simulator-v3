@@ -5,8 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e4e88ba1-64a1-4cdc-85c1-b00bc4c9bab6" name="Changes" comment="import streamlit as st&#10;import os&#10;&#10;st.title(&quot;Capital Care 360 Simulator&quot;)&#10;&#10;tab_simulator, tab_faq = st.tabs([&quot;Simulator&quot;, &quot;FAQ&quot;])&#10;&#10;with tab_simulator:&#10;    st.write(&quot;Simulator content goes here...&quot;)&#10;&#10;with tab_faq:&#10;    st.subheader(&quot;📘 Capital Care 360 FAQ&quot;)&#10;    st.markdown(&quot;Here are the most frequently asked questions about the simulator and how it works.&quot;)&#10;&#10;    faq_path = &quot;FAQ.md&quot;&#10;    if os.path.exists(faq_path):&#10;        with open(faq_path, &quot;r&quot;) as f:&#10;            st.markdown(f.read())&#10;    else:&#10;        st.warning(&quot;FAQ file not found.&quot;)">
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/step_1.py" beforeDir="false" afterPath="$PROJECT_DIR$/step_1.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/step_2.py" beforeDir="false" afterPath="$PROJECT_DIR$/step_2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/step_4.py" beforeDir="false" afterPath="$PROJECT_DIR$/step_4.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/step_5.py" beforeDir="false" afterPath="$PROJECT_DIR$/step_5.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/step_6.py" beforeDir="false" afterPath="$PROJECT_DIR$/step_6.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,25 +48,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Python.cost_library.executor&quot;: &quot;Run&quot;,
-    &quot;Python.health_simulator_app_v4.executor&quot;: &quot;Run&quot;,
-    &quot;Python.main.executor&quot;: &quot;Run&quot;,
-    &quot;Python.projected_health_risk_v4.executor&quot;: &quot;Run&quot;,
-    &quot;Python.simulator_core.executor&quot;: &quot;Run&quot;,
-    &quot;Python.step_1.executor&quot;: &quot;Run&quot;,
-    &quot;Python.step_2.executor&quot;: &quot;Run&quot;,
-    &quot;Python.step_4.executor&quot;: &quot;Run&quot;,
-    &quot;Python.step_5.executor&quot;: &quot;Run&quot;,
-    &quot;Python.step_6.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.cost_library.executor": "Run",
+    "Python.health_simulator_app_v4.executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.projected_health_risk_v4.executor": "Run",
+    "Python.simulator_core.executor": "Run",
+    "Python.step_1.executor": "Run",
+    "Python.step_2.executor": "Run",
+    "Python.step_4.executor": "Run",
+    "Python.step_5.executor": "Run",
+    "Python.step_6.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "settings.editor.selected.configurable": "project.propVCSSupport.DirectoryMappings"
   }
-}</component>
+}]]></component>
   <component name="RunManager">
     <configuration name="step_4" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="health_strategy_simulator-v4" />
@@ -105,14 +110,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1750528831960</updated>
-    </task>
-    <task id="LOCAL-00032" summary="import streamlit as st&#10;import os&#10;&#10;st.title(&quot;Capital Care 360 Simulator&quot;)&#10;&#10;tab_simulator, tab_faq = st.tabs([&quot;Simulator&quot;, &quot;FAQ&quot;])&#10;&#10;with tab_simulator:&#10;    st.write(&quot;Simulator content goes here...&quot;)&#10;&#10;with tab_faq:&#10;    st.subheader(&quot;📘 Capital Care 360 FAQ&quot;)&#10;    st.markdown(&quot;Here are the most frequently asked questions about the simulator and how it works.&quot;)&#10;&#10;    faq_path = &quot;FAQ.md&quot;&#10;    if os.path.exists(faq_path):&#10;        with open(faq_path, &quot;r&quot;) as f:&#10;            st.markdown(f.read())&#10;    else:&#10;        st.warning(&quot;FAQ file not found.&quot;)">
-      <option name="closed" value="true" />
-      <created>1752261771661</created>
-      <option name="number" value="00032" />
-      <option name="presentableId" value="LOCAL-00032" />
-      <option name="project" value="LOCAL" />
-      <updated>1752261771661</updated>
     </task>
     <task id="LOCAL-00033" summary="import streamlit as st&#10;import os&#10;&#10;st.title(&quot;Capital Care 360 Simulator&quot;)&#10;&#10;tab_simulator, tab_faq = st.tabs([&quot;Simulator&quot;, &quot;FAQ&quot;])&#10;&#10;with tab_simulator:&#10;    st.write(&quot;Simulator content goes here...&quot;)&#10;&#10;with tab_faq:&#10;    st.subheader(&quot;📘 Capital Care 360 FAQ&quot;)&#10;    st.markdown(&quot;Here are the most frequently asked questions about the simulator and how it works.&quot;)&#10;&#10;    faq_path = &quot;FAQ.md&quot;&#10;    if os.path.exists(faq_path):&#10;        with open(faq_path, &quot;r&quot;) as f:&#10;            st.markdown(f.read())&#10;    else:&#10;        st.warning(&quot;FAQ file not found.&quot;)">
       <option name="closed" value="true" />
@@ -498,7 +495,15 @@
       <option name="project" value="LOCAL" />
       <updated>1752541680420</updated>
     </task>
-    <option name="localTasksCounter" value="81" />
+    <task id="LOCAL-00081" summary="import streamlit as st&#10;import os&#10;&#10;st.title(&quot;Capital Care 360 Simulator&quot;)&#10;&#10;tab_simulator, tab_faq = st.tabs([&quot;Simulator&quot;, &quot;FAQ&quot;])&#10;&#10;with tab_simulator:&#10;    st.write(&quot;Simulator content goes here...&quot;)&#10;&#10;with tab_faq:&#10;    st.subheader(&quot;📘 Capital Care 360 FAQ&quot;)&#10;    st.markdown(&quot;Here are the most frequently asked questions about the simulator and how it works.&quot;)&#10;&#10;    faq_path = &quot;FAQ.md&quot;&#10;    if os.path.exists(faq_path):&#10;        with open(faq_path, &quot;r&quot;) as f:&#10;            st.markdown(f.read())&#10;    else:&#10;        st.warning(&quot;FAQ file not found.&quot;)">
+      <option name="closed" value="true" />
+      <created>1752596095479</created>
+      <option name="number" value="00081" />
+      <option name="presentableId" value="LOCAL-00081" />
+      <option name="project" value="LOCAL" />
+      <updated>1752596095479</updated>
+    </task>
+    <option name="localTasksCounter" value="82" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

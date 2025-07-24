@@ -1,3 +1,38 @@
+def compute_retirement_drawdown(chart_ages, deficit_values, savings_proj, proj_401k_combined,
+                                retirement_index, total_pension, estimated_ss):
+    used_capital = []
+    remaining_capital = []
+    unfunded_gap = []
+    pension_stream = []
+    ss_stream = []
+
+    savings_total = savings_proj[retirement_index] if 0 <= retirement_index < len(savings_proj) else 0
+    proj_401k_val = proj_401k_combined[retirement_index] if 0 <= retirement_index < len(proj_401k_combined) else 0
+    ss_per_year = estimated_ss / len(chart_ages) if chart_ages else 0
+    current_capital = savings_total + proj_401k_val
+
+    for i, age in enumerate(chart_ages):
+        pension = total_pension
+        ss = ss_per_year
+        total_income = pension + ss
+
+        deficit = deficit_values[i]
+        uncovered = max(deficit - total_income, 0)
+
+        used = min(uncovered, current_capital)
+        gap = max(uncovered - used, 0)
+        current_capital -= used
+
+        used_capital.append(used)
+        remaining_capital.append(max(current_capital, 0))
+        unfunded_gap.append(gap)
+        pension_stream.append(pension)
+        ss_stream.append(ss)
+
+    total_used_capital = sum(used_capital)
+    return used_capital, remaining_capital, unfunded_gap, pension_stream, ss_stream, total_used_capital
+
+
 def run_step_4(tab4):
     import matplotlib.pyplot as plt
     import numpy as np
@@ -12,7 +47,8 @@ def run_step_4(tab4):
     with tab4:
         st.header("Step 4: Financial Outlook")
         st.image("Tuku_Analyst.png", width=60)
-        st.markdown("Most household expenses drop after retirement — but healthcare costs often **rise exponentially**. They typically increase from about **8% to over 14% of household spending** as people age, due to chronic conditions, specialist visits, and medications. As you review your financials, pay attention to potential funding gaps in funding your retirement. Planning ahead also helps you preserve your quality of life, covering both essential care and your retirement dreams — including that bucket list you've been meaning to explore.")
+        st.markdown(
+            "Most household expenses drop after retirement — but healthcare costs often **rise exponentially**. They typically increase from about **8% to over 14% of household spending** as people age, due to chronic conditions, specialist visits, and medications. As you review your financials, pay attention to potential funding gaps in funding your retirement. Planning ahead also helps you preserve your quality of life, covering both essential care and your retirement dreams — including that bucket list you've been meaning to explore.")
 
         # Load projections from session state
         income_proj = st.session_state.get("income_proj", [])
@@ -21,25 +57,35 @@ def run_step_4(tab4):
         proj_401k_partner = st.session_state.get("proj_401k_partner", [])
 
         # --- Inserted logic to construct income_proj accurately across retirement ---
+        # --- Fixed: Ensure income_proj spans from current_age to retirement_age, then drops ---
         pension_user = st.session_state.get("pension_user", 0)
         pension_partner = st.session_state.get("pension_partner", 0)
         current_age = st.session_state.get("age", 30)
-        if income_proj and current_age is not None:
-            retirement_age = 65
-            retirement_index = retirement_age - current_age
-            years = len(income_proj)
+        retirement_age = 65
+        years = st.session_state.get("projection_years", 60)  # Optional fallback
 
-            if 0 <= retirement_index - 1 < years:
-                final_income = income_proj[retirement_index - 1]
-            else:
-                final_income = income_proj[-1] if income_proj else 0
+        # Pad or initialize income_proj
 
-            for i in range(years):
-                age = current_age + i
-                if age == retirement_age:
-                    income_proj[i] = final_income  # Full final income at retirement
-                elif age > retirement_age:
-                    income_proj[i] = (final_income * 0.40) + pension_user + pension_partner
+        retirement_index = retirement_age - current_age
+        if 0 <= retirement_index - 1 < len(income_proj):
+            final_income = income_proj[retirement_index - 1]
+        else:
+            final_income = income_proj[-1] if income_proj else 0
+
+        def pad_array(arr, length, force_negative=False):
+            padded = arr + [0] * (length - len(arr))
+            return [-abs(x) for x in padded] if force_negative else padded
+
+        # Ensure income_proj is at least `years` long before applying retirement logic
+        income_proj = pad_array(income_proj, years)
+
+        for i in range(years):
+            age = current_age + i
+            if age == retirement_age:
+                income_proj[i] = final_income
+            elif age > retirement_age:
+                income_proj[i] = (final_income * 0.40) + pension_user + pension_partner
+
         # Merge proj_401k_user and proj_401k_partner with explicit handling of missing/empty lists
         if proj_401k_user is None:
             proj_401k_user = []
@@ -71,9 +117,11 @@ def run_step_4(tab4):
             # household_growth_rate = st.session_state.get("expense_inflation", 0.025)
 
             retirement_index = retirement_age - current_age
-            retirement_savings_value = savings_proj[retirement_index] if 0 <= retirement_index < len(savings_proj) else 0
+            retirement_savings_value = savings_proj[retirement_index] if 0 <= retirement_index < len(
+                savings_proj) else 0
             retirement_401k_value = proj_401k[retirement_index] if 0 <= retirement_index < len(proj_401k) else 0
-            base_post_retirement_household = household_proj[retirement_index] * 0.85 if 0 <= retirement_index < len(household_proj) else None
+            base_post_retirement_household = household_proj[retirement_index] * 0.85 if 0 <= retirement_index < len(
+                household_proj) else None
 
             # Add post-retirement income adjustment similar to other projections
             # retirement_income_value = income_proj[retirement_index] if 0 <= retirement_index < len(income_proj) else 0
@@ -100,10 +148,17 @@ def run_step_4(tab4):
                     elif years_post > 1 and base_post_retirement_household is not None:
                         household_proj[i] = base_post_retirement_household * ((1 - 0.01) ** (years_post - 1))
 
-
-        debt = st.session_state.get("debt_proj", [])
+        monthly_debt = st.session_state.get("monthly_debt", 0)
         premiums = st.session_state.get("premiums", [])
         oop = st.session_state.get("oop", [])
+
+        # --- Fallback logic: ensure arrays are lists before using in years calculation ---
+        income_proj = income_proj if isinstance(income_proj, list) else []
+        savings_proj = savings_proj if isinstance(savings_proj, list) else []
+        proj_401k = proj_401k if isinstance(proj_401k, list) else []
+        household_proj = household_proj if isinstance(household_proj, list) else []
+        premiums = premiums if isinstance(premiums, list) else []
+        oop = oop if isinstance(oop, list) else []
 
         # Apply chronic multiplier to healthcare costs, but skip premiums if uninsured
         insurance_type = st.session_state.get("insurance_type", "Employer-based")
@@ -114,40 +169,84 @@ def run_step_4(tab4):
         if oop:
             oop = [o * chronic_multiplier for o in oop]
 
+        # --- Set fallback years ---
         fallback_years = 85
-        projection_arrays = [income_proj, savings_proj, proj_401k, household_proj, debt, premiums, oop]
 
-        # Check for any empty arrays before computing years
-        empty_arrays = [name for name, arr in zip(
-            ["income", "savings", "401k", "household", "debt", "premiums", "oop"],
-            projection_arrays) if not arr]
+        # --- Inflation Rate ---
+        inflation_rate = st.session_state.get("expense_inflation", 0.025)
 
+        # --- Monthly Debt ---
+        monthly_debt = st.session_state.get("monthly_debt", 0)
+
+        # --- Provisional debt projection (temporary) ---
+        debt_projection = [monthly_debt * ((1 + inflation_rate) ** i) for i in range(fallback_years)]
+
+        # --- Provisional projection array grouping (pre-alignment) ---
+        projection_arrays = [income_proj, savings_proj, proj_401k, household_proj, debt_projection, premiums, oop]
+        labels = ["Income", "Savings", "401(k)", "Household", "Debt", "Premiums", "OOP"]
+
+        # --- Missing check before alignment ---
+        empty_arrays = [label for label, arr in zip(labels, projection_arrays) if not arr]
         if empty_arrays:
             st.error(f"❌ Missing data in: {', '.join(empty_arrays)}. Please revisit earlier steps.")
             return
 
-        years = min(fallback_years, *[len(arr) for arr in projection_arrays])
+        # --- Calculate unified final_years ---
+        valid_lengths = [len(arr) for arr in projection_arrays]
+        final_years = min(fallback_years, *valid_lengths)
 
-        income_proj = pad_array(income_proj, years)
-        savings_proj = pad_array(savings_proj, years)
-        proj_401k = pad_array(proj_401k, years)
-        household_proj = pad_array(household_proj, years)
-        debt = pad_array(debt, years, force_negative=True)
-        premiums = pad_array(premiums, years)
-        oop = pad_array(oop, years)
+        # --- ✅ REDEFINE debt_projection now that final_years is known ---
+        debt_projection = [monthly_debt * ((1 + inflation_rate) ** i) for i in range(final_years)]
 
-        years = min(fallback_years, *[len(arr) for arr in projection_arrays])
-        ages = list(range(current_age, current_age + years))
+        # --- Re-pad all arrays to final_years ---
+        income_proj = pad_array(income_proj, final_years)
+        savings_proj = pad_array(savings_proj, final_years)
+        proj_401k = pad_array(proj_401k, final_years)
+        household_proj = pad_array(household_proj, final_years)
+        debt_projection = pad_array(debt_projection, final_years, force_negative=True)
+        premiums = pad_array(premiums, final_years)
+        oop = pad_array(oop, final_years)
+
+        # --- Final grouped arrays for validation ---
+        projection_arrays = [income_proj, savings_proj, proj_401k, household_proj, debt_projection, premiums, oop]
+        labels = ["Income", "Savings", "401(k)", "Household", "Debt", "Premiums", "OOP"]
+
+
+
+        # ✅ This is the only correct place to set ages
+        ages = list(range(current_age, current_age + final_years))
+
+        # Rebuild income_proj only if it's missing or misaligned
+        starting_income = st.session_state.get("net_user_income", 0) * 12
+        if not income_proj or len(income_proj) != final_years:
+            income_proj = [starting_income * ((1 + 0.02) ** i) for i in range(final_years)]
+
+        # Apply retirement transition logic to income_proj
+        retirement_index = 65 - current_age
+        if 0 <= retirement_index - 1 < len(income_proj):
+            final_income = income_proj[retirement_index - 1]
+        else:
+            final_income = income_proj[-1] if income_proj else 0
+
+        for i in range(final_years):
+            age = current_age + i
+            if age == 65:
+                income_proj[i] = final_income
+            elif age > 65:
+                income_proj[i] = (final_income * 0.40) + pension_user + pension_partner
 
         # Surplus/Deficit Over Time
-        total_expenses = [household_proj[i] + premiums[i] + oop[i] for i in range(years)]
-        surplus = [income_proj[i] - total_expenses[i] for i in range(years)]
+        total_expenses = [household_proj[i] + premiums[i] + oop[i] for i in range(final_years)]
+        surplus = [income_proj[i] - total_expenses[i] for i in range(final_years)]
 
         # capital_graph_df = st.session_state.get("capital_graph_df", pd.DataFrame())
         # expense_df = st.session_state.get("expense_df", pd.DataFrame())
 
+
+
         # Side-by-side Graphs: Annual Expenditures, Income, Savings + 401(k)
-        if not ages or not all(len(arr) == len(ages) for arr in [household_proj, debt, premiums, oop, income_proj, savings_proj, proj_401k]):
+        if not ages or not all(len(arr) == len(ages) for arr in
+                               [household_proj, debt_projection, premiums, oop, income_proj, savings_proj, proj_401k]):
             st.error("⚠️ Data mismatch: Please ensure Step 2 has been completed and submitted.")
             return
 
@@ -174,14 +273,13 @@ def run_step_4(tab4):
         total_pension = pension_user + pension_partner
         pension_stream = [0 if age < 66 else total_pension for age in ages]
         primary_income = [max(income_proj[i] - pension_stream[i], 0) for i in range(len(ages))]
-        axs[1].bar(ages, primary_income, label="Primary Income")
-        axs[1].bar(ages, pension_stream, bottom=primary_income, label="Pension")
+        axs[1].bar(ages, income_proj, label="Total Income")
+        axs[1].bar(ages, pension_stream, label="Pension Overlay", alpha=0.3)
         axs[1].set_title("Annual Income Projection")
         axs[1].set_xlabel("Age")
-        axs[1].set_ylabel("Amount ($)")
+        axs[1].yaxis.set_major_formatter(mticker.FuncFormatter(format_thousands))
         axs[1].legend()
         axs[1].grid(True)
-        axs[1].yaxis.set_major_formatter(mticker.FuncFormatter(format_thousands))
         axs[1].set_ylabel("Amount ($,000)")
 
         # Savings and 401(k)
@@ -206,7 +304,7 @@ def run_step_4(tab4):
             "Income": income_proj,
             "Savings": savings_proj,
             "401(k)": proj_401k,
-            "Debt": debt
+            "Debt": debt_projection
         }
         missing_or_misaligned = [
             key for key, arr in required_data.items()
@@ -227,7 +325,7 @@ def run_step_4(tab4):
                 "Surplus": surplus,
                 "Savings": savings_proj,
                 "401(k)": proj_401k,
-                "Debt": debt
+                "Debt": debt_projection
             })
             st.session_state["expense_df"] = expense_df
             st.session_state["surplus"] = surplus
@@ -242,9 +340,9 @@ def run_step_4(tab4):
         capital_graph_df = st.session_state.get("capital_graph_df", pd.DataFrame())
         expense_df = st.session_state.get("expense_df", pd.DataFrame())
         if (
-            capital_graph_df is not None and not capital_graph_df.empty and
-            expense_df is not None and not expense_df.empty and
-            st.session_state.get("surplus") is not None
+                capital_graph_df is not None and not capital_graph_df.empty and
+                expense_df is not None and not expense_df.empty and
+                st.session_state.get("surplus") is not None
         ):
             age_series = expense_df["Age"].tolist()
             surplus = st.session_state.get("surplus", [])
@@ -296,24 +394,63 @@ def run_step_4(tab4):
                 st.warning("Retirement index out of bounds. Skipping retirement readiness and income pie chart.")
                 return
 
-            # --- Lifetime Retirement Income Sources Pie Chart and Retirement Readiness side by side ---
-            st.subheader("💸 Retirement Outlook")
             col_tuku, col_pie, col_divider, col_bar = st.columns([0.5, 1.3, 0.1, 2])
 
-            # Estimate Social Security: 40% of final pre-retirement income times years post-retirement
-            final_income = income_proj[retirement_index - 1] if 0 <= retirement_index - 1 < len(income_proj) else 0
-            estimated_ss = final_income * 0.40 * (len(income_proj) - retirement_index)
 
-            # Retrieve final projected values (at retirement_index)
+            # Estimate Social Security and clamp if needed
+            final_income = income_proj[retirement_index - 1] if 0 <= retirement_index - 1 < len(income_proj) else 0
+            final_income = min(final_income, 500_000)  # Sanity cap
+            estimated_ss = final_income * 0.40
+            years_post_retirement = len(income_proj) - retirement_index
+            estimated_ss_total = estimated_ss * years_post_retirement
+            estimated_ss_total = 0 if estimated_ss_total > 1_000_000 else estimated_ss_total
+
+            # Save to session state for Step 5 and downstream charts
+            st.session_state["estimated_ss_total"] = estimated_ss_total
+            st.session_state["estimated_ss_annual"] = estimated_ss
+
             savings_total = savings_proj[retirement_index] if 0 <= retirement_index < len(savings_proj) else 0
-            proj_401k_val = proj_401k_combined[retirement_index] if 0 <= retirement_index < len(proj_401k_combined) else 0
+            proj_401k_val = proj_401k_combined[retirement_index] if 0 <= retirement_index < len(
+                proj_401k_combined) else 0
             pension_user = st.session_state.get("pension_user", 0)
             pension_partner = st.session_state.get("pension_partner", 0)
             total_pension = pension_user + pension_partner
             lifetime_pension = total_pension * (len(income_proj) - retirement_index)
 
-            labels = ["Social Security (est.)", "Savings", "401(k)", "Pensions"]
-            values = [estimated_ss, savings_total, proj_401k_val, lifetime_pension]
+            # Calculate additional income after retirement not covered by SS or pensions
+            post_retirement_income = sum(income_proj[retirement_index:]) - estimated_ss - lifetime_pension
+            if post_retirement_income < 0:
+                post_retirement_income = 0
+
+            # Total capital drawn down after retirement
+
+            # Compute drawdown early for use in pie chart
+            chart_ages = []
+            deficit_values = []
+            for i in range(len(age_series)):
+                age = age_series[i]
+                if age >= 65 and i < len(surplus):
+                    chart_ages.append(age)
+                    deficit = -surplus[i] if surplus[i] < 0 else 0
+                    deficit_values.append(deficit)
+
+            used_capital, _, _, _, _, total_used_capital = compute_retirement_drawdown(
+                chart_ages, deficit_values, savings_proj, proj_401k_combined,
+                retirement_index, total_pension, estimated_ss
+            )
+
+            # Retrieve snapshot values at retirement
+
+
+            years_post_retirement = len(income_proj) - retirement_index
+            estimated_ss_total = estimated_ss * years_post_retirement
+
+            savings_total = savings_proj[retirement_index] if 0 <= retirement_index < len(savings_proj) else 0
+            proj_401k_val = proj_401k_combined[retirement_index] if 0 <= retirement_index < len(
+                proj_401k_combined) else 0
+
+            labels = ["Social Security", "Cash Savings at Retirement", "401(k) at Retirement", "Pension Income"]
+            values = [estimated_ss_total, savings_total, proj_401k_val, lifetime_pension]
 
             with col_tuku:
                 st.image("Tuku_Analyst.png", width=60)
@@ -327,25 +464,31 @@ def run_step_4(tab4):
                 else:
                     filtered_labels, filtered_values = zip(*filtered_sources)
                     st.markdown("#### Retirement Income Sources")
-                    fig_pie, ax_pie = plt.subplots(figsize=(4, 4))
+                    fig_pie, ax_pie = plt.subplots(figsize=(1.8, 1.8))
+
                     def filter_autopct(pct):
                         return f"{pct:.1f}%" if pct > 2 else ''
-            ax_pie.pie(
-                filtered_values,
-                labels=filtered_labels,
-                autopct=filter_autopct,
-                startangle=90,
-                textprops={'fontsize': 7}
-            )
-            ax_pie.axis('equal')
-            st.pyplot(fig_pie)
+
+                    wedges, texts, autotexts = ax_pie.pie(
+                        filtered_values,
+                        labels=filtered_labels,
+                        autopct=filter_autopct,
+                        startangle=90,
+                        textprops={'fontsize': 7}
+                    )
+                    ax_pie.axis('equal')
+                    st.pyplot(fig_pie)
+
+
 
             with col_divider:
                 st.markdown("<div style='height: 160px; border-left: 1px solid #ccc;'></div>", unsafe_allow_html=True)
 
             with col_bar:
-                st.markdown("<div style='text-align: center;'><h4>Retirement Readiness</h4></div>", unsafe_allow_html=True)
-                st.markdown("This projection helps you plan ahead so you don’t outlive your financial resources — including savings, 401(k), and any eligible pension.")
+                st.markdown("<div style='text-align: center;'><h4>Retirement Readiness</h4></div>",
+                            unsafe_allow_html=True)
+                st.markdown(
+                    "This projection helps you plan ahead so you don’t outlive your financial resources — including savings, 401(k), and any eligible pension.")
                 # Always render retirement readiness chart for all post-retirement years, even with zero deficits
                 chart_ages = []
                 deficit_values = []
@@ -357,64 +500,137 @@ def run_step_4(tab4):
                         deficit_values.append(deficit)
 
                 if chart_ages:
-                    # Use values at retirement_index for available capital
                     savings_total = savings_proj[retirement_index] if 0 <= retirement_index < len(savings_proj) else 0
-                    proj_401k_val = proj_401k_combined[retirement_index] if 0 <= retirement_index < len(proj_401k_combined) else 0
+                    proj_401k_val = proj_401k_combined[retirement_index] if 0 <= retirement_index < len(
+                        proj_401k_combined) else 0
                     total_pension = pension_user + pension_partner
-                    total_available = savings_total + proj_401k_val + (total_pension * len(chart_ages))
+                    ss_per_year = estimated_ss / len(chart_ages)
+                    current_capital = savings_total + proj_401k_val
 
                     used_capital = []
                     remaining_capital = []
                     unfunded_gap = []
-                    current_capital = total_available
+                    pension_stream = []
+                    ss_stream = []
 
-                    for deficit in deficit_values:
-                        if deficit > 0:
-                            used = min(deficit, current_capital)
-                            gap = max(deficit - used, 0)
-                            current_capital -= used
-                        else:
-                            used = 0
-                            gap = 0
+                    for i, age in enumerate(chart_ages):
+                        pension = total_pension  # annual pension
+                        ss = ss_per_year
+                        total_income = pension + ss
+
+                        # Actual deficit to cover (if surplus < 0)
+                        deficit = deficit_values[i]
+                        uncovered = max(deficit - total_income, 0)
+
+                        used = min(uncovered, current_capital)
+                        gap = max(uncovered - used, 0)
+                        current_capital -= used
+
                         used_capital.append(used)
                         remaining_capital.append(max(current_capital, 0))
                         unfunded_gap.append(gap)
-
-                    surplus_remaining = remaining_capital.copy()
+                        pension_stream.append(pension)
+                        ss_stream.append(ss)
 
                     df_drawdown = pd.DataFrame({
                         "Age": chart_ages,
-                        "Capital Drawn from 401k/Savings": used_capital,
-                        "Remaining Capital": surplus_remaining,
-                        "Remaining Deficit": unfunded_gap
+                        "Capital Drawn (Savings/401k)": used_capital,
+                        "Remaining Capital": remaining_capital,
+                        "Unfunded Gap": unfunded_gap,
+                        "Pension Income": pension_stream,
+                        "Social Security": ss_stream
                     }).set_index("Age")
 
-                    fig, ax = plt.subplots(figsize=(10, 5))
-                    df_drawdown.plot(kind='bar', stacked=True, ax=ax, width=0.8)
-                    ax.set_xticks(range(len(df_drawdown.index)))
-                    ax.set_xticklabels(df_drawdown.index, rotation=0)
-                    ax.set_title("Retirement Readiness: Capital vs. Deficit")
-                    ax.set_ylabel("Amount ($,000)")
-                    ax.yaxis.set_major_formatter(mticker.FuncFormatter(format_thousands))
-                    ax.set_xlabel("Age")
-                    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.10), ncol=3)
-                    ax.grid(axis='y')
-                    st.pyplot(fig)
+                    total_used_capital = sum(used_capital) if 'used_capital' in locals() else 0
 
-                    # --- Retirement Readiness Insight Summary ---
-                    if any(used_capital):
-                        if current_capital > 0:
-                            st.info(f"📉 Your retirement capital is projected to decline gradually due to healthcare needs, but remains sufficient through age **{chart_ages[-1]}**.")
-                        else:
-                            try:
-                                depletion_index = remaining_capital.index(0)
-                                depletion_age = chart_ages[depletion_index]
-                            except ValueError:
-                                depletion_age = chart_ages[-1]
-                            st.warning(f"⚠️ Your capital is projected to be depleted by age **{depletion_age}**. Consider increasing contributions or reviewing your care strategy.")
+
+                    # Retirement Readiness Indicator (revised logic)
+                    st.subheader("🎯 Retirement Readiness")
+                    if surplus and capital_graph_df is not None and not capital_graph_df.empty:
+                        age_series = expense_df["Age"].tolist()
+                        chart_ages = []
+                        deficit_values = []
+                        for i, age in enumerate(age_series):
+                            if age >= 65 and i < len(surplus):
+                                chart_ages.append(age)
+                                deficit = -surplus[i] if surplus[i] < 0 else 0
+                                deficit_values.append(deficit)
+
+                        if chart_ages:
+                            savings_total = st.session_state.get("savings_projection", [0])[-1]
+                            proj_401k = st.session_state.get("proj_401k", [0])[-1]
+                            pension_user = st.session_state.get("pension_user", 0)
+                            pension_partner = st.session_state.get("pension_partner", 0)
+                            total_pension = pension_user + pension_partner
+                            total_available = savings_total + proj_401k + (total_pension * len(chart_ages))
+
+                            used_capital = []
+                            remaining_capital = []
+                            unfunded_gap = []
+                            current_capital = total_available
+
+                            for deficit in deficit_values:
+                                if deficit > 0:
+                                    used = min(deficit, current_capital)
+                                    gap = max(deficit - used, 0)
+                                    current_capital -= used
+                                else:
+                                    used = 0
+                                    gap = 0
+                                used_capital.append(used)
+                                remaining_capital.append(max(current_capital, 0))
+                                unfunded_gap.append(gap)
+
+                            surplus_remaining = remaining_capital.copy()
+
+                            df_drawdown = pd.DataFrame({
+                                "Age": chart_ages,
+                                "Capital Drawn from 401k/Savings": used_capital,
+                                "Remaining Capital": surplus_remaining,
+                                "Remaining Deficit": unfunded_gap
+                            }).set_index("Age")
+
+                            st.bar_chart(df_drawdown, use_container_width=True)
+
+                            if any(used_capital):
+                                if current_capital > 0:
+                                    st.success(
+                                        "✅ Your available capital is projected to cover all retirement expenses.")
+                                else:
+                                    depletion_age = chart_ages[
+                                        len(used_capital) - remaining_capital[::-1].index(
+                                            0) - 1] if 0 in remaining_capital else \
+                                        chart_ages[-1]
+                                    st.warning(
+                                        f"⚠️ You may fall short by approximately ${-current_capital:,.0f} in retirement funding. Capital is projected to be depleted by age {depletion_age}.")
+                            else:
+                                st.info(
+                                    "✅ No capital drawdown was needed. You remain financially self-sufficient through retirement.")
                     else:
-                        st.success("✅ Your retirement healthcare costs are fully covered without drawing down capital. You're in a strong financial position.")
+                        st.info(
+                            "ℹ️ Retirement readiness analysis is incomplete. Missing data for surplus or capital projections.")
+
+                    # Estimate Social Security: 40% of final pre-retirement income times years post-retirement
+                    final_income = income_proj[retirement_index - 1] if 0 <= retirement_index - 1 < len(
+                        income_proj) else 0
+                    estimated_ss = final_income * 0.40 * (len(income_proj) - retirement_index)
+
+                    # Retrieve final projected values (at retirement_index)
+                    savings_total = savings_proj[retirement_index] if 0 <= retirement_index < len(savings_proj) else 0
+                    proj_401k_val = proj_401k_combined[retirement_index] if 0 <= retirement_index < len(
+                        proj_401k_combined) else 0
+                    pension_user = st.session_state.get("pension_user", 0)
+                    pension_partner = st.session_state.get("pension_partner", 0)
+                    total_pension = pension_user + pension_partner
+                    lifetime_pension = total_pension * (len(income_proj) - retirement_index)
+
+                    labels = ["Social Security (est.)", "Savings", "401(k)", "Pensions"]
+                    values = [estimated_ss, savings_total, proj_401k_val, lifetime_pension]
+
+
                 else:
                     st.warning("No post-retirement years available for readiness chart.")
         else:
             st.warning("Capital or expense data missing — skipping retirement readiness chart.")
+
+

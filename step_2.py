@@ -3,11 +3,23 @@ import streamlit as st
 
 
 def run_step_2(tab3):
+    income_proj = st.session_state.get("income_proj", [])
+    savings_proj = st.session_state.get("savings_proj", [])
+    proj_401k = st.session_state.get("proj_401k", [])
+    household_proj = st.session_state.get("household_proj", [])
+    premiums = st.session_state.get("premiums", [])
+    oop = st.session_state.get("oop", [])
+    debt_proj = st.session_state.get("debt_proj", [])
     with tab3:
         # --- Ensure family_status is initialized in session_state to avoid AttributeError ---
         if "family_status" not in st.session_state:
             st.session_state.family_status = "single"
-       # --- Use premium inflation from Step 1 as selected by the user ---
+        # --- Ensure monthly_debt_input is initialized before use ---
+        monthly_debt_input = st.session_state.get("debt_monthly_payment")
+        if monthly_debt_input is None:
+            debt_proj_list = st.session_state.get("debt_proj", [0])
+            monthly_debt_input = debt_proj_list[0] if isinstance(debt_proj_list, list) and debt_proj_list else 0
+        # --- Use premium inflation from Step 1 as selected by the user ---
         inflation_rate = st.session_state.get("premium_inflation", 0.05)
         # --- Ensure profile and key variables are always defined to avoid reference errors ---
         profile = st.session_state.get("profile", {})
@@ -23,75 +35,42 @@ def run_step_2(tab3):
         if "cost_df" in st.session_state and not st.session_state.get("step2_submitted"):
             cost_df = st.session_state.cost_df
             # insurance_type and profile are already defined above
-            if not cost_df.empty and "OOP Cost" in cost_df.columns:
-                oop_first_year = round(cost_df["OOP Cost"].iloc[0], 2)
-            else:
-                oop_first_year = 0  # Fallback if data is missing
-                st.warning("Unable to calculate OOP for the first year. Please check Step 1 inputs.")
-            if not cost_df.empty and "Premiums" in cost_df.columns:
-                premium_first_year = round(cost_df["Premiums"].iloc[0], 2)
-            else:
-                premium_first_year = 0  # Fallback if data is missing
 
             st.markdown("### 💵 Income & Tax Estimation")
-            # User's income block, styled like partner's block
-            monthly_income = st.number_input("User's Monthly Gross Income ($)", min_value=0, value=5000)
-            est_tax_rate = st.number_input("User's Tax Rate (%)", min_value=0.0, max_value=100.0, value=25.0)
-            income_growth = st.number_input("User's Expected Income Growth Rate (%)", min_value=0.0, max_value=20.0, value=2.0)
 
-            # --- Partner income/tax/growth fields (re-inserted) ---
+            # --- User's income block, styled like partner's block ---
+            net_user_income = st.number_input("User's Monthly Gross Income ($)", min_value=0, value=5000)
+            est_tax_rate = st.number_input("User's Tax Rate (%)", min_value=0.0, max_value=100.0, value=25.0)
+            income_growth = st.number_input("User's Expected Income Growth Rate (%)", min_value=0.0, max_value=20.0,
+                                            value=2.0)
+            # Fallback values to avoid UnboundLocalError for single users
+            partner_net_income = 0
+            net_income_monthly_partner = 0
+            net_income_annual_partner = 0
+            income_growth_partner = 0
+
+            # --- Partner income/tax/growth fields (if family) ---
             if family_status == "family":
                 partner_gross_income = st.number_input("Partner's Monthly Gross Income ($)", min_value=0, value=8000)
                 partner_tax_rate = st.number_input("Partner's Tax Rate (%)", min_value=0.0, max_value=100.0, value=25.0)
-                partner_income_growth = st.number_input("Partner's Expected Income Growth Rate (%)", min_value=0.0, max_value=20.0, value=3.0)
+                partner_income_growth = st.number_input("Partner's Expected Income Growth Rate (%)", min_value=0.0,
+                                                        max_value=20.0, value=3.0)
 
-            # --- 401(k)-adjusted net income calculation (401k subtracted before tax) ---
-            tax_rate = est_tax_rate
-            user_income = monthly_income * 12
-            # Ensure 401k variables are always defined
-            contrib_401k_employee = 0
-            contrib_401k_partner = 0
-            # We'll overwrite them below after input
-
-            # --- Ensure 401(k) contribution variables are always initialized ---
-            user_401k_contribution = 0
-            partner_401k_contribution = 0
-
-            # --- 401(k) Contribution Inputs ---
-            if st.session_state.family_status == "family":
-                partner_401k_contribution = st.number_input("Partner's Annual 401(k) Contribution ($)", min_value=0, value=0)
-
-            # Fallbacks for partner income/inputs
-            net_income_annual_partner = 0
-            income_growth_partner = 0
-            net_income_monthly_partner = 0
-            # --- Corrected net income calculation ---
-            # Convert annual 401(k) contribution to monthly if needed
-            monthly_401k_user = user_401k_contribution / 12 if user_401k_contribution > 0 else 0
-            # Apply tax AFTER subtracting 401(k)
             est_tax_rate_val = est_tax_rate / 100 if est_tax_rate > 1 else est_tax_rate
-            user_net_income = (monthly_income - monthly_401k_user) * (1 - est_tax_rate_val)
-            net_income_monthly_user = user_net_income
+
 
             if family_status == "family":
-                partner_gross_income_val = partner_gross_income if "partner_gross_income" in locals() else 0
-                partner_tax_rate_val = partner_tax_rate / 100 if partner_tax_rate > 1 else partner_tax_rate
-                partner_income_growth_val = partner_income_growth / 100 if "partner_income_growth" in locals() else 0.03
-                # If partner_401k_contrib is not set (toggle off), set to 0
-                if "partner_401k_contrib" not in locals():
-                    contrib_401k_partner = 0
-                else:
-                    contrib_401k_partner = partner_401k_contrib
-                partner_401k_contribution = contrib_401k_partner
+                partner_401k_contrib = st.session_state.get("partner_401k_contrib", 0)
+                partner_401k_contribution = partner_401k_contrib
                 monthly_401k_partner = partner_401k_contribution / 12 if partner_401k_contribution > 0 else 0
+                partner_tax_rate_val = partner_tax_rate / 100 if partner_tax_rate > 1 else partner_tax_rate
+                partner_gross_income_val = partner_gross_income if "partner_gross_income" in locals() else 0
+                partner_income_growth_val = partner_income_growth / 100 if "partner_income_growth" in locals() else 0.03
+
                 partner_net_income = (partner_gross_income_val - monthly_401k_partner) * (1 - partner_tax_rate_val)
                 net_income_monthly_partner = partner_net_income
                 net_income_annual_partner = partner_net_income * 12
                 income_growth_partner = partner_income_growth_val
-            else:
-                partner_net_income = 0
-                net_income_monthly_partner = 0
-                net_income_annual_partner = 0
 
             # --- 🛒 Household Expenses ---
             st.markdown("### 🛒 Household Expenses")
@@ -123,14 +102,13 @@ def run_step_2(tab3):
                 monthly_household = monthly_expenses  # Use actual input for year 1
                 household_proj = [monthly_expenses * ((1 + inflation_rate) ** i) * 12 for i in range(years)]  # For future years
 
-            st.write("Itemized Total Household Expenses:", monthly_expenses)
+
             st.markdown(f"#### 💰 Total Monthly Household Expenses: ${monthly_expenses:,.0f}")
-            st.markdown(f"**Total Monthly Household Expenses:** ${monthly_expenses:,}")
+
 
             # --- 💳 Debt Payments ---
             st.markdown("### 💳 Monthly Debt Payments")
-            debt_monthly_payment = st.number_input("Monthly Debt Payments (Credit Cards, Loans)", min_value=0,
-                                                   value=1500)
+            monthly_debt_input = st.number_input("Monthly Debt Payments (Credit Cards, Loans)", min_value=0, value=1500)
 
             # --- Inflation rate pulled from Step 1 ---
             inflation = st.session_state.get("inflation_rate", 0.03)
@@ -143,17 +121,35 @@ def run_step_2(tab3):
             # --- Project household expenses and debt over time ---
             household_expenses_annual = st.session_state.get("monthly_expenses_input", 0) * 12
             household_proj = [household_expenses_annual * ((1 + inflation_rate) ** i) for i in range(years)]
-            debt_proj = [debt_monthly_payment * 12 for _ in range(years)]  # constant assumption
+            # Project debt over time based on user input monthly_debt_input
+            debt_proj = [monthly_debt_input * ((1 + inflation_rate) ** i) for i in range(years)]
 
             # --- Projected Health Premiums ---
             base_premium = st.session_state.get("base_premium", 6000)
             premiums = [base_premium * ((1 + inflation) ** i) for i in range(years)]
             st.session_state["premiums"] = premiums
             st.session_state["projected_premiums"] = premiums
+            st.session_state["debt_proj"] = debt_proj
 
             # --- Store in session state for downstream use ---
             st.session_state.household_proj = household_proj
-            st.session_state.debt_proj = debt_proj
+
+            # --- 🧓 Long-Term Care Projection ---
+            ltc_enabled = st.session_state.get("ltc_enabled", False)
+            ltc_annual_cost = st.session_state.get("ltc_annual_cost", 0)
+            user_age = profile.get("age", 30)
+
+            if ltc_enabled:
+                ltc_proj = [
+                    ltc_annual_cost * ((1 + inflation_rate) ** i) if (user_age + i) >= 75 else 0
+                    for i in range(years)
+                ]
+            else:
+                ltc_proj = [0] * years
+
+            st.session_state["ltc_proj"] = ltc_proj
+
+
 
             # --- 💼 401(k) Contributions ---
             st.markdown("### 💼 401(k) Contributions")
@@ -200,19 +196,26 @@ def run_step_2(tab3):
                 partner_401k_contrib = 0
                 partner_employer_401k_contrib = 0
 
-            # --- DEBUG: Show 401(k) contributions for user and partner ---
-            user_401k_contribution = contrib_401k_employee
-            st.write(f"DEBUG: 401(k) Contribution (User): {user_401k_contribution}")
+
+
+            # --- Net user income after 401(k) and tax ---
+            monthly_401k_user = contrib_401k_employee / 12
+            est_tax_rate_val = est_tax_rate / 100 if est_tax_rate > 1 else est_tax_rate
+            net_user_income = (net_user_income - monthly_401k_user) * (1 - est_tax_rate_val)
+            user_income = net_user_income * 12  # annualized
+
             if family_status == "family":
-                partner_401k_contribution = partner_401k_contrib
-                st.write(f"DEBUG: 401(k) Contribution (Partner): {partner_401k_contribution}")
+                # --- Partner Net Income After 401(k) and Tax (Final Patch) ---
+                monthly_401k_partner = partner_401k_contrib / 12
+                partner_tax_rate_val = partner_tax_rate / 100 if partner_tax_rate > 1 else partner_tax_rate
+                partner_net_income = (partner_gross_income - monthly_401k_partner) * (1 - partner_tax_rate_val)
+                net_income_monthly_partner = partner_net_income
+                net_income_annual_partner = partner_net_income * 12
 
             # --- NEW: Net income after 401(k) logic (using corrected formula) ---
-            st.write("DEBUG: Net Income After 401(k) (User):", net_income_monthly_user)
             if family_status == "family":
                 st.write("DEBUG: Net Income After 401(k) (Partner):", net_income_monthly_partner)
-            total_net_income = user_net_income + partner_net_income
-            st.write("DEBUG: Total Net Income:", total_net_income)
+            total_net_income = net_user_income + partner_net_income
             net_income_monthly = total_net_income
             st.session_state.net_income_monthly = net_income_monthly
             st.session_state.net_income_monthly_partner = net_income_monthly_partner
@@ -288,8 +291,8 @@ def run_step_2(tab3):
                 retirement_age = 65
                 # --- Revised Retirement-aware income projection (stop regular income after retirement) ---
                 income_proj = [
-                    net_income_monthly_user * 12 * ((1 + income_growth) ** i) if (
-                        user_age + i) < retirement_age else net_income_monthly_user * 12 * 0.4
+                    net_user_income * 12 * ((1 + income_growth) ** i) if (
+                        user_age + i) < retirement_age else net_user_income * 12 * 0.4
                     for i in range(years)
                 ]
 
@@ -364,11 +367,11 @@ def run_step_2(tab3):
                 else:
                     st.session_state["proj_401k_partner"] = [0] * years
 
-                st.session_state.monthly_income = monthly_income
+                st.session_state.net_user_income = net_user_income
                 st.session_state.net_income_annual = net_income_annual
                 st.session_state.income_growth = income_growth
                 st.session_state.monthly_expenses = monthly_expenses
-                st.session_state.debt_monthly_payment = debt_monthly_payment
+                st.session_state.debt_monthly_payment = monthly_debt_input
                 st.session_state.savings_start = savings_start
                 st.session_state.savings_growth = savings_growth
                 st.session_state.annual_contrib = annual_contrib
@@ -384,100 +387,52 @@ def run_step_2(tab3):
                 # insurance_type already defined at top-level
                 employee_premium = st.session_state.get("employee_premium", 0)
 
-                monthly_expenses = st.session_state.get("monthly_expenses", 0)
-                debt_monthly_payment = st.session_state.get("debt_monthly_payment", 0)
+            monthly_expenses = st.session_state.get("monthly_expenses", 0)
+            debt_monthly_payment = st.session_state.get("debt_monthly_payment", 0)
 
-                # --- NEW: Joint income and expenses computation for available cash ---
-                # Premium escalation logic (first year only for available cash debug)
-                premium_cost = st.session_state.get("premium_cost", 0)
-                oop_cost = st.session_state.get("oop_cost", 0)
-                monthly_premium = premium_cost / 12
-                monthly_oop = oop_cost / 12
-                if insurance_type == "None":
-                    premium_cost = 0
-                elif insurance_type == "Employer":
-                    premium_cost = employee_premium
-                else:  # Marketplace / Self-insured
-                    premium_cost = premium_first_year
-                oop_cost = oop_first_year
-                monthly_premium = premium_cost / 12
-                monthly_oop = oop_cost / 12
-                # Use the user-entered (year 1) monthly expenses for available cash
-                household_expenses = st.session_state.get("monthly_expenses", 0)
-                monthly_household = household_expenses
-                monthly_debt = debt_proj[0] / 12
-                monthly_savings = annual_contrib / 12
-                # Use corrected available cash calculation and ensure monthly_household from projection
-                total_net_income = user_net_income + (net_income_annual_partner if family_status == "family" else 0)
-                available_cash = total_net_income / 12 - monthly_premium - monthly_oop - household_expenses - monthly_debt - monthly_savings
+            # --- NEW: Joint income and expenses computation for available cash ---
+            # Always use premium_cost and oop_cost from session_state (set in Step 1)
+            premium_cost = st.session_state.get("premium_cost", 0)
+            oop_cost = st.session_state.get("oop_cost", 0)
+            monthly_premium = premium_cost / 12
+            monthly_oop = oop_cost / 12
 
-                # Display available cash using st.success with formatting and emoji
+            household_expenses = st.session_state.get("monthly_expenses", 0)
+            monthly_household = household_expenses
+            monthly_savings = annual_contrib / 12
+
+            # Use final monthly net income values from above (already net and monthly)
+            net_income_user_final = st.session_state.get("net_user_income", 0)
+            net_income_partner_final = st.session_state.get("net_income_monthly_partner", 0)
+            total_net_income = net_income_user_final + net_income_partner_final
+
+            # ✅ FIXED: Remove incorrect division by 12
+            available_cash = total_net_income - monthly_premium - monthly_oop - household_expenses - monthly_debt_input - monthly_savings
+            st.session_state["available_cash"] = available_cash
+
+
+            # Display available cash using st.success with formatting and emoji
+            # ✅ Only display estimated available cash after user submits Step 2
+            if st.session_state.get("step2_submitted"):
+                available_cash = st.session_state.get("available_cash", 0)
                 st.markdown(f"💰 Estimated Available Cash (Post Premium + OOP): ${available_cash:,.0f}/month")
-                print("DEBUG: Household Expenses:", monthly_household)
                 if available_cash < 0:
-                    st.error("⚠️ You do not have enough available cash to meet your current expenses. Please review your income, expenses, or savings strategy.")
+                    st.error(
+                        "⚠️ You do not have enough available cash to meet your current expenses. Please review your income, expenses, or savings strategy.")
 
-                # Reset household_proj to avoid stale or residual values from earlier block
-                if household_expenses is not None:
-                    household_proj = [household_expenses * ((1 + inflation_rate) ** i) for i in range(years)]
-                # Calculate available cash projection year-over-year with premium and OOP escalation
-                available_cash_projection = []
-                for i in range(years):
-                    # Premium escalation logic
-                    if insurance_type == "None":
-                        premium_cost = 0
-                    elif insurance_type == "Employer":
-                        premium_cost = employee_premium * ((1 + inflation_rate) ** i)
-                    else:  # Marketplace / Self-insured
-                        premium_cost = premium_first_year * ((1 + inflation_rate) ** i)
-                    # OOP escalation
-                    oop_cost = oop_first_year * ((1 + inflation_rate) ** i)
-                    # Calculate monthly values for clarity
-                    monthly_income_user = income_proj[i] / 12
-                    monthly_income_partner = income_proj_partner[i] / 12 if family_status == "family" else 0
-                    monthly_income = monthly_income_user + monthly_income_partner
-                    monthly_premium = premium_cost / 12
-                    monthly_oop = oop_cost / 12
-                    # For projection, grow household expenses per inflation, but use user input for year 1
-                    if i == 0:
-                        monthly_household_proj = st.session_state.get("monthly_expenses", 0)
-                    else:
-                        monthly_household_proj = household_proj[i] / 12
-                    monthly_debt = debt_proj[i] / 12
-                    monthly_savings = annual_contrib / 12
+            # Optional clean Step 2 submit button to force user to confirm inputs
+            if st.button("Submit Step 2"):
+                st.session_state["step2_submitted"] = True
+                st.session_state["step3_submitted"] = False
+                st.session_state["current_step"] = 3  # optional progression
+                st.success("✅ Step 2 completed. Proceed to Step 3.")
+                # Show available cash summary after submission
+                if "available_cash" in st.session_state:
+                    available_cash = st.session_state["available_cash"]
+                    st.markdown(f"💰 Estimated Available Cash (Post Premium + OOP): ${available_cash:,.0f}/month")
+                    if available_cash < 0:
+                        st.error("⚠️ You do not have enough available cash to meet your current expenses. Please review your income, expenses, or savings strategy.")
 
-                    # Use the same joint income/expenses logic as above for projection
-                    total_net_income_proj = monthly_income
-                    total_expenses_proj = monthly_premium + monthly_oop + monthly_household_proj + monthly_debt + monthly_savings
-                    cash = total_net_income_proj - total_expenses_proj
-                    available_cash_projection.append(max(0, cash))
 
-                st.session_state["available_cash_projection"] = available_cash_projection
-                # For backward compatibility, set available_cash as year 1 (first year) value
-                st.session_state.available_cash = available_cash_projection[0]
 
-                estimated_available_cash = st.session_state.available_cash
-                # No need to display available cash again here, already shown above
-
-                # Set step2_submitted True and reset step3_submitted only after all calculations
-                st.session_state.step2_submitted = True
-                st.session_state.step3_submitted = False
-                st.write("Debug: Step 2 completed.")
-
-                # Debug output for troubleshooting
-                st.write("DEBUG: Family Status:", family_status)
-                st.write("DEBUG: Net Income (User):", net_income_monthly_user)
-                st.write("DEBUG: Net Income (Partner):", net_income_monthly_partner)
-                st.write("DEBUG: Total Net Income:", total_net_income)
-                st.write("DEBUG: Monthly Premium:", monthly_premium)
-                st.write("DEBUG: Monthly OOP:", monthly_oop)
-                st.write("DEBUG: Household Expenses:", monthly_household)
-                st.write("DEBUG: Monthly Debt:", monthly_debt)
-                st.write("DEBUG: Monthly Savings:", monthly_savings)
-
-        if "available_cash" in st.session_state:
-            rounded_cash = round(st.session_state.available_cash, 2)
-
-            if rounded_cash <= 0:
-                st.warning(
-                    "⚠️ Your expenses may exceed your net income. Please review your household spending or debt to ensure you can fund healthcare and savings goals.")
+        # (Moved display logic for available cash into the button block above.)
